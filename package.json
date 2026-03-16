@@ -1,0 +1,25 @@
+{
+  "name": "wordpress-wasm-tree-view",
+  "version": "1.0.0",
+  "description": "WordPress admin tree view plugin for pages, posts, and custom post types",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "lint": "wp-scripts lint-js",
+    "wp-now": "wp-now start --blueprint=blueprint.json"
+  },
+  "dependencies": {
+    "@wordpress/api-fetch": "^7.0.0",
+    "react": "^18.0.0",
+    "react-arborist": "^3.4.0",
+    "react-dom": "^18.0.0",
+    "use-resize-observer": "^9.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@wordpress/scripts": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "main": "build/index.js"
+}

@@ -1,0 +1,44 @@
+#wptv-root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 32px); /* WP admin bar height */
+  padding: 20px 20px 0;
+  box-sizing: border-box;
+}
+
+/* Tab bar */
+.nav-tab-wrapper .nav-tab {
+  font-size: 14px;
+  padding: 8px 14px;
+}
+
+/* Tree rows */
+.wptv-node {
+  transition: background 0.1s;
+}
+
+.wptv-node:hover {
+  background: #f0f6fc !important;
+}
+
+/* Quick action links: hide by default, show on row hover */
+.wptv-node-actions {
+  display: none;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.wptv-node:hover .wptv-node-actions {
+  display: flex;
+}
+
+/* Drag-over indicator */
+[data-drop-target="true"] > .wptv-node {
+  outline: 2px solid #2271b1;
+  outline-offset: -2px;
+}
+
+/* Loading spinner alignment */
+.spinner.is-active {
+  vertical-align: middle;
+}
