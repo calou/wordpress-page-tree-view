@@ -12,7 +12,10 @@ export interface WPPost {
 export interface TreeNode {
   id: string;
   name: string;
+  /** undefined = leaf, [] = expandable but not yet fetched, [...] = loaded */
   children?: TreeNode[];
+  childrenLoaded?: boolean;
+  isLoadingChildren?: boolean;
   data: WPPost;
 }
 

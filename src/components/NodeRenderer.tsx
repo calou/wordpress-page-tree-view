@@ -34,14 +34,14 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
       onClick={() => node.toggle()}
       className="wptv-node"
     >
-      {/* Expand/collapse toggle */}
+      {/* Expand/collapse toggle / loading spinner */}
       <span
         style={{
           display: 'inline-flex',
           width: 16,
           flexShrink: 0,
           color: '#787c82',
-          fontSize: 10,
+          fontSize: 13,
           justifyContent: 'center',
         }}
         onClick={(e) => {
@@ -49,13 +49,17 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           node.toggle();
         }}
       >
-        {node?.children.length > 0 ? (node.isOpen ? '▾' : '▸') : ''}
+        {node.data.isLoadingChildren ? (
+          <span className="spinner is-active" style={{ width: 10, height: 10, margin: 0 }} />
+        ) : (
+          !node.isLeaf ? (node.isOpen ? '▾' : '▸') : ''
+        )}
       </span>
 
       {/* Page icon */}
       <span
         className="dashicons dashicons-admin-page"
-        style={{ fontSize: 14, color: '#787c82', flexShrink: 0 }}
+        style={{ fontSize: 18, color: '#787c82', flexShrink: 0 }}
       />
 
       {/* Title */}
@@ -65,7 +69,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          fontSize: 13,
+          fontSize: 15,
         }}
         title={post.title.rendered}
         dangerouslySetInnerHTML={{ __html: post.title.rendered || `(${post.slug})` }}
