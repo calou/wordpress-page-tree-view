@@ -18,6 +18,14 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
 
   const statusColor = STATUS_COLORS[post.status] ?? '#787c82';
 
+  const background = node.willReceiveDrop
+    ? '#dbeafe'
+    : node.isSelected
+    ? '#e7f0fd'
+    : 'transparent';
+
+  const outline = node.willReceiveDrop ? '2px solid #2271b1' : 'none';
+
   return (
     <div
       ref={dragHandle}
@@ -29,7 +37,9 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
         paddingRight: 8,
         cursor: 'pointer',
         borderRadius: 3,
-        background: node.isSelected ? '#e7f0fd' : 'transparent',
+        background,
+        outline,
+        outlineOffset: '-2px',
       }}
       onClick={() => node.toggle()}
       className="wptv-node"

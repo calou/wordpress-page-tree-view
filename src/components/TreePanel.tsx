@@ -1,11 +1,41 @@
 import React, { useRef } from 'react';
 import { Tree } from 'react-arborist';
-import type { TreeApi, MoveHandler } from 'react-arborist';
+import type { TreeApi, MoveHandler, CursorProps } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
 import { NodeRenderer } from './NodeRenderer';
 import { useTreeData } from '../hooks/useTreeData';
 import { useMove } from '../hooks/useMove';
 import type { TreeNode } from '../types';
+
+function DropCursor({ top, left, indent }: CursorProps) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top,
+        left: left + indent,
+        right: 0,
+        height: 2,
+        background: '#2271b1',
+        borderRadius: 1,
+        pointerEvents: 'none',
+        zIndex: 10,
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: -4,
+          top: -3,
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: '#2271b1',
+        }}
+      />
+    </div>
+  );
+}
 
 interface TreePanelProps {
   restBase: string;
@@ -93,6 +123,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
         indent={20}
         overscanCount={10}
         openByDefault={false}
+        renderCursor={DropCursor}
       >
         {NodeRenderer}
       </Tree>
