@@ -10,9 +10,6 @@ interface MoveArgs {
 
 type SetTree = React.Dispatch<React.SetStateAction<TreeNode[]>>;
 
-/**
- * Remove nodes with the given ids from the tree, returning them and the modified tree.
- */
 function extractNodes(
   tree: TreeNode[],
   ids: Set<string>
@@ -33,9 +30,6 @@ function extractNodes(
   return { extracted, remaining };
 }
 
-/**
- * Insert nodes into the tree at the specified parent and index.
- */
 function insertNodes(
   tree: TreeNode[],
   nodes: TreeNode[],
@@ -55,42 +49,63 @@ function insertNodes(
       return { ...node, children };
     }
     if (node.children?.length) {
-      return {
-        ...node,
-        children: insertNodes(node.children, nodes, parentId, index),
-      };
+      return { ...node, children: insertNodes(node.children, nodes, parentId, index) };
     }
     return node;
   });
+}
+
+function findChildren(tree: TreeNode[], parentId: string): TreeNode[] | null {
+  for (const node of tree) {
+    if (node.id === parentId) return node.children ?? [];
+    if (node.children?.length) {
+      const found = findChildren(node.children, parentId);
+      if (found !== null) return found;
+    }
+  }
+  return null;
+}
+
+/** Return the direct children of parentId in tree, or the root list if parentId is null. */
+function getSiblings(tree: TreeNode[], parentId: string | null): TreeNode[] {
+  if (parentId === null) return tree;
+  return findChildren(tree, parentId) ?? [];
 }
 
 export function useMove(restBase: string, setTree: SetTree) {
   return useCallback(
     ({ dragIds, parentId, index }: MoveArgs) => {
       const idSet = new Set(dragIds);
+      const parentNumericId = parentId ? parseInt(parentId, 10) : 0;
+
       let snapshot: TreeNode[] = [];
+      let newSiblings: TreeNode[] = [];
 
       setTree((prev) => {
         snapshot = prev;
+
         const { extracted, remaining } = extractNodes(prev, idSet);
         const updated = extracted.map((node) => ({
           ...node,
-          data: {
-            ...node.data,
-            parent: parentId ? parseInt(parentId, 10) : 0,
-          },
+          data: { ...node.data, parent: parentNumericId },
         }));
-        return insertNodes(remaining, updated, parentId, index);
+        const newTree = insertNodes(remaining, updated, parentId, index);
+
+        // Capture sibling list after insertion to derive correct menu_order values
+        newSiblings = getSiblings(newTree, parentId);
+
+        return newTree;
       });
 
-      const parentNumericId = parentId ? parseInt(parentId, 10) : 0;
+      // Build a map of node id → its new index among siblings
+      const orderMap = new Map(newSiblings.map((n, i) => [n.id, i]));
 
       Promise.all(
-        dragIds.map((id, i) =>
-          movePost(`wp/v2/${restBase}`, parseInt(id, 10), parentNumericId, index + i)
-        )
+        dragIds.map((id) => {
+          const menuOrder = orderMap.get(id) ?? index;
+          return movePost(`wp/v2/${restBase}`, parseInt(id, 10), parentNumericId, menuOrder);
+        })
       ).catch(() => {
-        // Roll back on error
         setTree(snapshot);
       });
     },

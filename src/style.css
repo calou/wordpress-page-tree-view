@@ -42,3 +42,9 @@
 .spinner.is-active {
   vertical-align: middle;
 }
+
+/* Action panel buttons */
+.wptv-action-panel button:hover:not(:disabled),
+.wptv-action-panel a:hover {
+  text-decoration: underline;
+}

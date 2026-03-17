@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Tree } from 'react-arborist';
 import type { TreeApi, MoveHandler, CursorProps } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
 import { NodeRenderer } from './NodeRenderer';
 import { useTreeData } from '../hooks/useTreeData';
 import { useMove } from '../hooks/useMove';
+import { TreeContext } from '../context/TreeContext';
 import type { TreeNode } from '../types';
 
 function DropCursor({ top, left, indent }: CursorProps) {
@@ -50,6 +51,9 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const { tree, setTree, isLoading, progress, error, reload, loadChildren } =
     useTreeData(restBase, hierarchical);
   const onMove = useMove(restBase, setTree);
+
+  const [actionNodeId, setActionNodeIdRaw] = useState<string | null>(null);
+  const setActionNodeId = useCallback((id: string | null) => setActionNodeIdRaw(id), []);
 
   if (isLoading) {
     const label = progress
@@ -111,22 +115,24 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   };
 
   return (
-    <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-      <Tree<TreeNode>
-        ref={treeApiRef}
-        data={tree}
-        onMove={handleMove}
-        onToggle={handleToggle}
-        width={width}
-        height={height}
-        rowHeight={38}
-        indent={20}
-        overscanCount={10}
-        openByDefault={false}
-        renderCursor={DropCursor}
-      >
-        {NodeRenderer}
-      </Tree>
-    </div>
+    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId }}>
+      <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <Tree<TreeNode>
+          ref={treeApiRef}
+          data={tree}
+          onMove={handleMove}
+          onToggle={handleToggle}
+          width={width}
+          height={height}
+          rowHeight={38}
+          indent={20}
+          overscanCount={10}
+          openByDefault={false}
+          renderCursor={DropCursor}
+        >
+          {NodeRenderer}
+        </Tree>
+      </div>
+    </TreeContext.Provider>
   );
 }

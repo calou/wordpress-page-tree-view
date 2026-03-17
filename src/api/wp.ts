@@ -16,7 +16,7 @@ export async function fetchAllPosts(
   parent?: number
 ): Promise<WPPost[]> {
   const parentParam = parent !== undefined ? `&parent=${parent}` : '';
-  const firstPagePath = `/${restBase}?per_page=${PER_PAGE}&page=1&_fields=${fields}&orderby=menu_order&order=asc${parentParam}`;
+  const firstPagePath = `/${restBase}?per_page=${PER_PAGE}&page=1&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash${parentParam}`;
 
   const response = await apiFetch<WPPost[]>({
     path: firstPagePath,
@@ -44,7 +44,7 @@ export async function fetchAllPosts(
   const remainingResults = await Promise.all(
     remainingPages.map(async (page) => {
       const data = await apiFetch<WPPost[]>({
-        path: `/${restBase}?per_page=${PER_PAGE}&page=${page}&_fields=${fields}&orderby=menu_order&order=asc${parentParam}`,
+        path: `/${restBase}?per_page=${PER_PAGE}&page=${page}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash${parentParam}`,
       } as ApiFetchOptions);
       loaded += data.length;
       onProgress?.(loaded, total);
@@ -64,7 +64,7 @@ export async function fetchChildren(
   fields = 'id,parent,menu_order,title,status,type,link,slug'
 ): Promise<WPPost[]> {
   return apiFetch<WPPost[]>({
-    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc`,
+    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash`,
   } as ApiFetchOptions);
 }
 
@@ -75,6 +75,41 @@ export async function fetchPostTypes(): Promise<Record<string, ContentType>> {
   return apiFetch<Record<string, ContentType>>({
     path: '/wp/v2/types',
   } as ApiFetchOptions);
+}
+
+/**
+ * Create a new post (page, CPT, etc.).
+ */
+export async function createPost(
+  restBase: string,
+  data: { title: string; parent: number; menu_order: number; status?: string }
+): Promise<WPPost> {
+  return apiFetch<WPPost>({
+    path: `/${restBase}`,
+    method: 'POST',
+    data: { status: 'draft', ...data },
+  } as ApiFetchOptions);
+}
+
+/**
+ * Trash a single post (DELETE sends it to trash in WordPress).
+ */
+export async function trashPost(restBase: string, id: number): Promise<WPPost> {
+  return apiFetch<WPPost>({
+    path: `/${restBase}/${id}`,
+    method: 'DELETE',
+  } as ApiFetchOptions);
+}
+
+/**
+ * Recursively trash a post and all its descendants (deepest-first).
+ */
+export async function trashWithDescendants(restBase: string, id: number): Promise<void> {
+  const children = await fetchChildren(restBase, id);
+  for (const child of children) {
+    await trashWithDescendants(restBase, child.id);
+  }
+  await trashPost(restBase, id);
 }
 
 /**
