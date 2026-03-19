@@ -6,7 +6,9 @@ import type { ContentType } from '../types';
 const EXCLUDED_TYPES = new Set([
   'attachment',
   'nav_menu_item',
+  'post',
   'wp_block',
+  'wp_global_styles',
   'wp_template',
   'wp_template_part',
   'wp_navigation',
@@ -15,15 +17,13 @@ const EXCLUDED_TYPES = new Set([
 ]);
 
 interface UseContentTypesResult {
-  hierarchical: ContentType[];
-  flat: ContentType[];
+  types: ContentType[];
   isLoading: boolean;
   error: string | null;
 }
 
 export function useContentTypes(): UseContentTypesResult {
-  const [hierarchical, setHierarchical] = useState<ContentType[]>([]);
-  const [flat, setFlat] = useState<ContentType[]>([]);
+  const [types, setTypes] = useState<ContentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,15 +31,11 @@ export function useContentTypes(): UseContentTypesResult {
     let cancelled = false;
 
     fetchPostTypes()
-      .then((types) => {
+      .then((all) => {
         if (cancelled) return;
-
-        const all = Object.values(types).filter(
-          (t) => !EXCLUDED_TYPES.has(t.slug) && t.rest_base
+        setTypes(
+          Object.values(all).filter((t) => !EXCLUDED_TYPES.has(t.slug) && t.rest_base)
         );
-
-        setHierarchical(all.filter((t) => t.hierarchical));
-        setFlat(all.filter((t) => !t.hierarchical));
       })
       .catch((err: Error) => {
         if (cancelled) return;
@@ -54,5 +50,5 @@ export function useContentTypes(): UseContentTypesResult {
     };
   }, []);
 
-  return { hierarchical, flat, isLoading, error };
+  return { types, isLoading, error };
 }
