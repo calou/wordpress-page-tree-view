@@ -6,9 +6,9 @@ import { NodeRenderer } from './NodeRenderer';
 import { useTreeData } from '../hooks/useTreeData';
 import { useMove } from '../hooks/useMove';
 import { TreeContext } from '../context/TreeContext';
-import { searchPosts } from '../api/wp';
+import { searchPosts, fetchPostsByIds } from '../api/wp';
 import { htmlToText } from '../utils/treeUtils';
-import type { TreeNode } from '../types';
+import type { TreeNode, WPPost } from '../types';
 
 function DropCursor({ top, left, indent }: CursorProps) {
   return (
@@ -62,7 +62,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
 
   const clearSearch = useCallback(() => setSearchTerm(''), []);
 
-  // Fetch all matching pages from the API when the search term changes
+  // Fetch matching pages + their full ancestor chains, then build a tree from them
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
       setSearchResults(null);
@@ -71,21 +71,74 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
     }
 
     let cancelled = false;
-    const timer = setTimeout(() => {
+
+    const timer = setTimeout(async () => {
       setIsSearching(true);
-      searchPosts(`wp/v2/${restBase}`, searchTerm)
-        .then((posts) => {
+      try {
+        const base = `wp/v2/${restBase}`;
+
+        // Step 1: get matching posts
+        const matches = await searchPosts(base, searchTerm);
+        if (cancelled) return;
+
+        if (matches.length === 0) {
+          setSearchResults([]);
+          return;
+        }
+
+        // Step 2: iteratively fetch ancestors until all parent IDs are resolved
+        const collected = new Map<number, WPPost>();
+        for (const p of matches) collected.set(p.id, p);
+
+        let toFetch = new Set(matches.filter(p => p.parent && !collected.has(p.parent)).map(p => p.parent));
+        while (toFetch.size > 0) {
+          const ancestors = await fetchPostsByIds(base, [...toFetch]);
           if (cancelled) return;
-          setSearchResults(posts.map((post) => ({
+          toFetch = new Set();
+          for (const p of ancestors) {
+            collected.set(p.id, p);
+            if (p.parent && !collected.has(p.parent)) toFetch.add(p.parent);
+          }
+        }
+
+        // Step 3: build a tree from the collected posts
+        const nodeMap = new Map<number, TreeNode>();
+        for (const post of collected.values()) {
+          nodeMap.set(post.id, {
             id: String(post.id),
             name: htmlToText(post.title.rendered) || `(${post.slug})`,
-            children: undefined, // flat list, no expand
+            children: [],
             childrenLoaded: true,
             data: post,
-          })));
-        })
-        .catch(() => { if (!cancelled) setSearchResults([]); })
-        .finally(() => { if (!cancelled) setIsSearching(false); });
+          });
+        }
+
+        const roots: TreeNode[] = [];
+        for (const post of collected.values()) {
+          const node = nodeMap.get(post.id)!;
+          if (post.parent && nodeMap.has(post.parent)) {
+            nodeMap.get(post.parent)!.children!.push(node);
+          } else {
+            roots.push(node);
+          }
+        }
+
+        // Sort children and mark true leaves (no children in this subtree)
+        for (const node of nodeMap.values()) {
+          if (node.children!.length === 0) {
+            node.children = undefined;
+          } else {
+            node.children!.sort((a, b) => a.data.menu_order - b.data.menu_order);
+          }
+        }
+        roots.sort((a, b) => a.data.menu_order - b.data.menu_order);
+
+        if (!cancelled) setSearchResults(roots);
+      } catch {
+        if (!cancelled) setSearchResults([]);
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
     }, 300);
 
     return () => {
@@ -193,7 +246,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
             rowHeight={38}
             indent={20}
             overscanCount={10}
-            openByDefault={false}
+            openByDefault={isInSearch}
             renderCursor={DropCursor}
           >
             {NodeRenderer}

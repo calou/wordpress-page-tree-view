@@ -90,6 +90,20 @@ export async function createPost(
 }
 
 /**
+ * Fetch specific posts by ID (used to resolve ancestor chains).
+ */
+export async function fetchPostsByIds(
+  restBase: string,
+  ids: number[],
+  fields = 'id,parent,menu_order,title,status,type,link,slug'
+): Promise<WPPost[]> {
+  if (ids.length === 0) return [];
+  return apiFetch<WPPost[]>({
+    path: `/${restBase}?per_page=${Math.min(ids.length, PER_PAGE)}&_fields=${fields}&include=${ids.join(',')}&status=${STATUS}`,
+  });
+}
+
+/**
  * Search posts by title across all statuses.
  */
 export async function searchPosts(
