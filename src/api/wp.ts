@@ -16,7 +16,7 @@ export async function fetchAllPosts(
   parent?: number
 ): Promise<WPPost[]> {
   const parentParam = parent !== undefined ? `&parent=${parent}` : '';
-  const firstPagePath = `/${restBase}?per_page=${PER_PAGE}&page=1&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash${parentParam}`;
+  const firstPagePath = `/${restBase}?per_page=${PER_PAGE}&page=1&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash${parentParam}`;
 
   const response = await apiFetch<WPPost[]>({
     path: firstPagePath,
@@ -44,7 +44,7 @@ export async function fetchAllPosts(
   const remainingResults = await Promise.all(
     remainingPages.map(async (page) => {
       const data = await apiFetch<WPPost[]>({
-        path: `/${restBase}?per_page=${PER_PAGE}&page=${page}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash${parentParam}`,
+        path: `/${restBase}?per_page=${PER_PAGE}&page=${page}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash${parentParam}`,
       } as ApiFetchOptions);
       loaded += data.length;
       onProgress?.(loaded, total);
@@ -64,7 +64,7 @@ export async function fetchChildren(
   fields = 'id,parent,menu_order,title,status,type,link,slug'
 ): Promise<WPPost[]> {
   return apiFetch<WPPost[]>({
-    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,trash`,
+    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash`,
   } as ApiFetchOptions);
 }
 

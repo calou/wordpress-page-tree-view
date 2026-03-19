@@ -10,12 +10,13 @@ import {
   removeNodeFromTree,
 } from '../utils/treeUtils';
 
-const STATUS_COLORS: Record<string, string> = {
-  publish: '#00a32a',
-  draft: '#dba617',
-  private: '#3858e9',
-  pending: '#996800',
-  trash: '#d63638',
+const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
+  publish: { icon: 'dashicons-admin-page', color: '#787c82' },
+  draft: { icon: 'dashicons-edit', color: '#dba617' },
+  private: { icon: 'dashicons-lock', color: '#3858e9' },
+  pending: { icon: 'dashicons-clock',        color: '#996800' },
+  future:  { icon: 'dashicons-calendar-alt', color: '#2271b1' },
+  trash: { icon: 'dashicons-trash', color: '#d63638' },
 };
 
 function toNode(post: WPPost): TreeNode {
@@ -179,7 +180,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
   const post = node.data.data;
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
-  const statusColor = STATUS_COLORS[post.status] ?? '#787c82';
+  const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
 
   const { actionNodeId, setActionNodeId } = useTreeContext();
   const isActive = actionNodeId === node.id;
@@ -240,14 +241,14 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
         )}
       </span>
 
-      {/* Page icon */}
+      {/* Page icon (reflects status) */}
       <span
-        className="dashicons dashicons-admin-page"
-        style={{ fontSize: 18, color: '#787c82', flexShrink: 0 }}
+        className={`dashicons ${statusIcon.icon}`}
+        style={{ fontSize: 18, color: statusIcon.color, flexShrink: 0 }}
       />
 
       {/* Title + inline actions */}
-      <span style={{ flex: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
         <span
           style={{
             overflow: 'hidden',
@@ -289,25 +290,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
         )}
       </span>
 
-      {/* Status badge */}
-      {post.status !== 'publish' && (
-        <span
-          style={{
-            fontSize: 10,
-            padding: '1px 5px',
-            borderRadius: 3,
-            background: statusColor + '22',
-            color: statusColor,
-            border: `1px solid ${statusColor}55`,
-            flexShrink: 0,
-            textTransform: 'uppercase',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-          }}
-        >
-          {post.status}
-        </span>
-      )}
+
     </div>
   );
 }
