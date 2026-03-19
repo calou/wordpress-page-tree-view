@@ -93,15 +93,21 @@ export function useMove(restBase: string, tree: TreeNode[], setTree: SetTree) {
 
       setTree(newTree);
 
-      // Build a map of node id → its new index among siblings
-      const orderMap = new Map(newSiblings.map((n, i) => [n.id, i]));
+      // Compare old vs new sibling positions and update every node that moved.
+      // Only updating dragIds is insufficient: inserting at position 0 sets the dragged
+      // node to menu_order=0, but existing siblings already at 0 create a tie in WordPress.
+      const oldSiblingIndexes = new Map(
+        getSiblings(snapshot, parentId).map((n, i) => [n.id, i])
+      );
 
-      Promise.all(
-        dragIds.map((id) => {
-          const menuOrder = orderMap.get(id) ?? index;
-          return movePost(`wp/v2/${restBase}`, parseInt(id, 10), parentNumericId, menuOrder);
-        })
-      ).catch(() => {
+      const apiCalls = newSiblings.flatMap((sibling, newIdx) => {
+        const oldIdx = oldSiblingIndexes.get(sibling.id);
+        // oldIdx is undefined when the node comes from a different parent — always update.
+        if (oldIdx === newIdx) return [];
+        return [movePost(`wp/v2/${restBase}`, parseInt(sibling.id, 10), parentNumericId, newIdx)];
+      });
+
+      Promise.all(apiCalls).catch(() => {
         setTree(snapshot);
       });
     },
