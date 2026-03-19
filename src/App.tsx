@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useContentTypes } from './hooks/useContentTypes';
 import { TreePanel } from './components/TreePanel';
 
 export function App() {
   const { types, isLoading, error } = useContentTypes();
   const [activeTab, setActiveTab] = useState(0);
+
+  useEffect(() => {
+    setActiveTab(0);
+  }, [types.length]);
 
   if (isLoading) {
     return (

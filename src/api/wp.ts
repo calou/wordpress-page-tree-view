@@ -5,6 +5,7 @@ import type { WPPost, ContentType } from '../types';
 type ApiFetchOptions = Parameters<typeof apiFetch>[0];
 
 const PER_PAGE = 100;
+const STATUS = 'publish,draft,private,pending,future,trash';
 
 /**
  * Fetch all posts of a given type, paginating in parallel after the first page.
@@ -15,11 +16,10 @@ export async function fetchAllPosts(
   onProgress?: (loaded: number, total: number) => void,
   parent?: number
 ): Promise<WPPost[]> {
-  const parentParam = parent !== undefined ? `&parent=${parent}` : '';
-  const firstPagePath = `/${restBase}?per_page=${PER_PAGE}&page=1&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash${parentParam}`;
+  const baseQuery = `per_page=${PER_PAGE}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}${parent !== undefined ? `&parent=${parent}` : ''}`;
 
   const response = await apiFetch<WPPost[]>({
-    path: firstPagePath,
+    path: `/${restBase}?${baseQuery}&page=1`,
     parse: false,
   } as ApiFetchOptions);
 
@@ -44,7 +44,7 @@ export async function fetchAllPosts(
   const remainingResults = await Promise.all(
     remainingPages.map(async (page) => {
       const data = await apiFetch<WPPost[]>({
-        path: `/${restBase}?per_page=${PER_PAGE}&page=${page}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash${parentParam}`,
+        path: `/${restBase}?${baseQuery}&page=${page}`,
       } as ApiFetchOptions);
       loaded += data.length;
       onProgress?.(loaded, total);
@@ -56,7 +56,8 @@ export async function fetchAllPosts(
 }
 
 /**
- * Fetch immediate children of a single parent node (single page, no pagination needed).
+ * Fetch immediate children of a single parent node.
+ * Note: capped at PER_PAGE (100). Nodes with more than 100 children will be silently truncated.
  */
 export async function fetchChildren(
   restBase: string,
@@ -64,7 +65,7 @@ export async function fetchChildren(
   fields = 'id,parent,menu_order,title,status,type,link,slug'
 ): Promise<WPPost[]> {
   return apiFetch<WPPost[]>({
-    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=publish,draft,private,pending,future,trash`,
+    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}`,
   } as ApiFetchOptions);
 }
 
@@ -102,13 +103,11 @@ export async function trashPost(restBase: string, id: number): Promise<WPPost> {
 }
 
 /**
- * Recursively trash a post and all its descendants (deepest-first).
+ * Recursively trash a post and all its descendants (deepest-first, siblings in parallel).
  */
 export async function trashWithDescendants(restBase: string, id: number): Promise<void> {
   const children = await fetchChildren(restBase, id);
-  for (const child of children) {
-    await trashWithDescendants(restBase, child.id);
-  }
+  await Promise.all(children.map((child) => trashWithDescendants(restBase, child.id)));
   await trashPost(restBase, id);
 }
 

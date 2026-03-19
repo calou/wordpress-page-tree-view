@@ -3,7 +3,7 @@ export interface WPPost {
   parent: number;
   menu_order: number;
   title: { rendered: string };
-  status: 'publish' | 'draft' | 'private' | 'pending' | 'trash';
+  status: 'publish' | 'draft' | 'private' | 'pending' | 'future' | 'trash';
   type: string;
   link: string;
   slug: string;

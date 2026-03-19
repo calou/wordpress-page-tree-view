@@ -32,12 +32,6 @@
   display: flex;
 }
 
-/* Drag-over indicator */
-[data-drop-target="true"] > .wptv-node {
-  outline: 2px solid #2271b1;
-  outline-offset: -2px;
-}
-
 /* Loading spinner alignment */
 .spinner.is-active {
   vertical-align: middle;

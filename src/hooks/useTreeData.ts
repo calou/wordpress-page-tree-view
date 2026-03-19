@@ -30,10 +30,8 @@ function buildTree(posts: WPPost[]): TreeNode[] {
   for (const post of posts) {
     const node = nodeMap.get(post.id)!;
     if (post.parent && nodeMap.has(post.parent)) {
-      nodeMap.get(post.parent)!.children = [
-        ...(nodeMap.get(post.parent)!.children ?? []),
-        node,
-      ];
+      const parent = nodeMap.get(post.parent)!;
+      (parent.children ??= []).push(node);
     } else {
       roots.push(node);
     }

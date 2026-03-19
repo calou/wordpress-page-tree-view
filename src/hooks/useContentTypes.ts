@@ -34,7 +34,7 @@ export function useContentTypes(): UseContentTypesResult {
       .then((all) => {
         if (cancelled) return;
         setTypes(
-          Object.values(all).filter((t) => !EXCLUDED_TYPES.has(t.slug) && t.rest_base)
+          Object.values(all).filter((t) => !EXCLUDED_TYPES.has(t.slug) && t.rest_base && t.hierarchical)
         );
       })
       .catch((err: Error) => {

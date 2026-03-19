@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { Tree } from 'react-arborist';
 import type { TreeApi, MoveHandler, CursorProps } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
@@ -50,10 +50,9 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
 
   const { tree, setTree, isLoading, progress, error, reload, loadChildren } =
     useTreeData(restBase, hierarchical);
-  const onMove = useMove(restBase, setTree);
+  const onMove = useMove(restBase, tree, setTree);
 
-  const [actionNodeId, setActionNodeIdRaw] = useState<string | null>(null);
-  const setActionNodeId = useCallback((id: string | null) => setActionNodeIdRaw(id), []);
+  const [actionNodeId, setActionNodeId] = useState<string | null>(null);
 
   if (isLoading) {
     const label = progress

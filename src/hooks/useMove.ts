@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { movePost } from '../api/wp';
 import type { TreeNode } from '../types';
 
@@ -72,30 +72,26 @@ function getSiblings(tree: TreeNode[], parentId: string | null): TreeNode[] {
   return findChildren(tree, parentId) ?? [];
 }
 
-export function useMove(restBase: string, setTree: SetTree) {
+export function useMove(restBase: string, tree: TreeNode[], setTree: SetTree) {
+  // Always reflects the latest tree without being a useCallback dependency
+  const treeRef = useRef(tree);
+  treeRef.current = tree;
+
   return useCallback(
     ({ dragIds, parentId, index }: MoveArgs) => {
+      const snapshot = treeRef.current;
       const idSet = new Set(dragIds);
       const parentNumericId = parentId ? parseInt(parentId, 10) : 0;
 
-      let snapshot: TreeNode[] = [];
-      let newSiblings: TreeNode[] = [];
+      const { extracted, remaining } = extractNodes(snapshot, idSet);
+      const updated = extracted.map((node) => ({
+        ...node,
+        data: { ...node.data, parent: parentNumericId },
+      }));
+      const newTree = insertNodes(remaining, updated, parentId, index);
+      const newSiblings = getSiblings(newTree, parentId);
 
-      setTree((prev) => {
-        snapshot = prev;
-
-        const { extracted, remaining } = extractNodes(prev, idSet);
-        const updated = extracted.map((node) => ({
-          ...node,
-          data: { ...node.data, parent: parentNumericId },
-        }));
-        const newTree = insertNodes(remaining, updated, parentId, index);
-
-        // Capture sibling list after insertion to derive correct menu_order values
-        newSiblings = getSiblings(newTree, parentId);
-
-        return newTree;
-      });
+      setTree(newTree);
 
       // Build a map of node id → its new index among siblings
       const orderMap = new Map(newSiblings.map((n, i) => [n.id, i]));

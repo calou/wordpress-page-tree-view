@@ -19,7 +19,7 @@ const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
   trash: { icon: 'dashicons-trash', color: '#d63638' },
 };
 
-function toNode(post: WPPost): TreeNode {
+function toCreatedNode(post: WPPost): TreeNode {
   return {
     id: String(post.id),
     name: post.title.rendered || `(${post.slug})`,
@@ -27,6 +27,13 @@ function toNode(post: WPPost): TreeNode {
     childrenLoaded: true,
     data: post,
   };
+}
+
+/** Decode HTML entities and strip tags from a WordPress rendered title. */
+function htmlToText(html: string): string {
+  const el = document.createElement('span');
+  el.innerHTML = html;
+  return el.textContent ?? html;
 }
 
 interface NodeActionsProps {
@@ -64,7 +71,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         parent: post.id,
         menu_order: 0,
       });
-      setTree((prev) => addChildToNode(prev, nodeId, toNode(newPost)));
+      setTree((prev) => addChildToNode(prev, nodeId, toCreatedNode(newPost)));
       treeApiRef.current?.open(nodeId);
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
       setActionNodeId(null);
@@ -79,7 +86,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         parent: post.parent,
         menu_order: post.menu_order,
       });
-      setTree((prev) => addSiblingBefore(prev, nodeId, toNode(newPost)));
+      setTree((prev) => addSiblingBefore(prev, nodeId, toCreatedNode(newPost)));
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
       setActionNodeId(null);
     });
@@ -93,7 +100,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         parent: post.parent,
         menu_order: post.menu_order + 1,
       });
-      setTree((prev) => addSiblingAfter(prev, nodeId, toNode(newPost)));
+      setTree((prev) => addSiblingAfter(prev, nodeId, toCreatedNode(newPost)));
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
       setActionNodeId(null);
     });
@@ -196,9 +203,8 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
       setActionNodeId(isActive ? null : node.id);
-      node.toggle();
     },
-    [isActive, node, setActionNodeId]
+    [isActive, node.id, setActionNodeId]
   );
 
   return (
@@ -256,9 +262,10 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             whiteSpace: 'nowrap',
             fontSize: 15,
           }}
-          title={post.title.rendered}
-          dangerouslySetInnerHTML={{ __html: post.title.rendered || `(${post.slug})` }}
-        />
+          title={htmlToText(post.title.rendered)}
+        >
+          {htmlToText(post.title.rendered) || `(${post.slug})`}
+        </span>
 
         {/* Actions: full set when active, hover-only Edit/View otherwise */}
         {isActive ? (
