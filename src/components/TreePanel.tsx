@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Tree } from 'react-arborist';
 import type { TreeApi, MoveHandler, CursorProps } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
@@ -6,6 +6,8 @@ import { NodeRenderer } from './NodeRenderer';
 import { useTreeData } from '../hooks/useTreeData';
 import { useMove } from '../hooks/useMove';
 import { TreeContext } from '../context/TreeContext';
+import { searchPosts } from '../api/wp';
+import { htmlToText } from '../utils/treeUtils';
 import type { TreeNode } from '../types';
 
 function DropCursor({ top, left, indent }: CursorProps) {
@@ -54,7 +56,43 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
 
   const [actionNodeId, setActionNodeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<TreeNode[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
+
+  const clearSearch = useCallback(() => setSearchTerm(''), []);
+
+  // Fetch all matching pages from the API when the search term changes
+  useEffect(() => {
+    if (searchTerm.trim().length < 2) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setIsSearching(true);
+      searchPosts(`wp/v2/${restBase}`, searchTerm)
+        .then((posts) => {
+          if (cancelled) return;
+          setSearchResults(posts.map((post) => ({
+            id: String(post.id),
+            name: htmlToText(post.title.rendered) || `(${post.slug})`,
+            children: undefined, // flat list, no expand
+            childrenLoaded: true,
+            data: post,
+          })));
+        })
+        .catch(() => { if (!cancelled) setSearchResults([]); })
+        .finally(() => { if (!cancelled) setIsSearching(false); });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchTerm, restBase]);
 
   if (isLoading) {
     const label = progress
@@ -108,37 +146,48 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   };
 
   const handleToggle = (id: string) => {
+    if (searchResults !== null) return; // no lazy-load during search
     const node = treeApiRef.current?.get(id);
-    // Load children only when opening a node whose children haven't been fetched yet
     if (node?.isOpen && !node.data.childrenLoaded) {
       loadChildren(id);
     }
   };
 
+  const isInSearch = searchResults !== null;
+
   return (
-    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll }}>
+    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
+        <div style={{ padding: '0 4px 8px', flexShrink: 0, position: 'relative' }}>
           <input
             type="search"
-            placeholder="Filter pages…"
+            placeholder="Search all pages…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="wptv-search"
           />
+          {isSearching && (
+            <span
+              className="spinner is-active"
+              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, margin: 0 }}
+            />
+          )}
         </div>
+
+        {isInSearch && searchResults!.length === 0 && !isSearching && (
+          <div style={{ padding: '8px 4px', color: '#787c82', fontSize: 13 }}>
+            No pages found.
+          </div>
+        )}
+
         <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
           <Tree<TreeNode>
             ref={treeApiRef}
-            data={tree}
-            onMove={canEditAll ? handleMove : undefined}
-            disableDrag={!canEditAll}
-            disableDrop={!canEditAll}
+            data={isInSearch ? searchResults! : tree}
+            onMove={canEditAll && !isInSearch ? handleMove : undefined}
+            disableDrag={!canEditAll || isInSearch}
+            disableDrop={!canEditAll || isInSearch}
             onToggle={handleToggle}
-            searchTerm={searchTerm}
-            searchMatch={(node, term) =>
-              node.data.name.toLowerCase().includes(term.toLowerCase())
-            }
             width={width}
             height={height}
             rowHeight={38}

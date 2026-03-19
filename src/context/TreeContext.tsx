@@ -10,6 +10,7 @@ export interface TreeContextValue {
   actionNodeId: string | null;
   setActionNodeId: (id: string | null) => void;
   canEditAll: boolean;
+  clearSearch: () => void;
 }
 
 const TreeContext = createContext<TreeContextValue | null>(null);

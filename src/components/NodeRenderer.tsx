@@ -36,7 +36,7 @@ interface NodeActionsProps {
 }
 
 function NodeActions({ post, nodeId }: NodeActionsProps) {
-  const { restBase, setTree, treeApiRef, setActionNodeId } = useTreeContext();
+  const { restBase, setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = useState(false);
 
@@ -122,6 +122,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         }))
       );
       setActionNodeId(null);
+      clearSearch();
     });
   };
 
@@ -136,6 +137,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         }))
       );
       setActionNodeId(null);
+      clearSearch();
     });
   };
 

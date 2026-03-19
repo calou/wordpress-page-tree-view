@@ -90,6 +90,19 @@ export async function createPost(
 }
 
 /**
+ * Search posts by title across all statuses.
+ */
+export async function searchPosts(
+  restBase: string,
+  query: string,
+  fields = 'id,parent,menu_order,title,status,type,link,slug'
+): Promise<WPPost[]> {
+  return apiFetch<WPPost[]>({
+    path: `/${restBase}?per_page=50&_fields=${fields}&status=${STATUS}&search=${encodeURIComponent(query)}`,
+  });
+}
+
+/**
  * Duplicate a post: creates a draft copy with the same parent and menu_order.
  */
 export async function duplicatePost(restBase: string, post: WPPost): Promise<WPPost> {
