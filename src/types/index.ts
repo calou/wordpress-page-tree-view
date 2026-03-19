@@ -31,6 +31,7 @@ export interface WptvConfig {
   nonce: string;
   restUrl: string;
   adminUrl: string;
+  canEditAll: boolean;
 }
 
 declare global {

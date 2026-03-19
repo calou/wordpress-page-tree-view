@@ -79,9 +79,10 @@ function wptv_enqueue_assets( string $hook_suffix ): void {
         'wptv-app',
         'wptvConfig',
         [
-            'nonce'    => wp_create_nonce( 'wp_rest' ),
-            'restUrl'  => rest_url(),
-            'adminUrl' => admin_url(),
+            'nonce'       => wp_create_nonce( 'wp_rest' ),
+            'restUrl'     => rest_url(),
+            'adminUrl'    => admin_url(),
+            'canEditAll'  => current_user_can( 'edit_others_pages' ),
         ]
     );
 }

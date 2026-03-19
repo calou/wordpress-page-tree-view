@@ -9,6 +9,7 @@ export interface TreeContextValue {
   treeApiRef: RefObject<TreeApi<TreeNode> | null>;
   actionNodeId: string | null;
   setActionNodeId: (id: string | null) => void;
+  canEditAll: boolean;
 }
 
 const TreeContext = createContext<TreeContextValue | null>(null);

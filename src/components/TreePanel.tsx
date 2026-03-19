@@ -53,6 +53,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const onMove = useMove(restBase, tree, setTree);
 
   const [actionNodeId, setActionNodeId] = useState<string | null>(null);
+  const canEditAll = window.wptvConfig?.canEditAll ?? false;
 
   if (isLoading) {
     const label = progress
@@ -114,12 +115,14 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   };
 
   return (
-    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId }}>
+    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll }}>
       <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         <Tree<TreeNode>
           ref={treeApiRef}
           data={tree}
-          onMove={handleMove}
+          onMove={canEditAll ? handleMove : undefined}
+          disableDrag={!canEditAll}
+          disableDrop={!canEditAll}
           onToggle={handleToggle}
           width={width}
           height={height}

@@ -217,7 +217,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
   const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
   const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
 
-  const { actionNodeId, setActionNodeId } = useTreeContext();
+  const { actionNodeId, setActionNodeId, canEditAll } = useTreeContext();
   const isActive = actionNodeId === node.id;
 
   const background = node.willReceiveDrop
@@ -237,7 +237,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
 
   return (
     <div
-      ref={dragHandle}
+      ref={canEditAll ? dragHandle : null}
       style={{
         ...style,
         display: 'flex',
