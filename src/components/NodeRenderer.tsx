@@ -246,18 +246,48 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
         style={{ fontSize: 18, color: '#787c82', flexShrink: 0 }}
       />
 
-      {/* Title */}
-      <span
-        style={{
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          fontSize: 15,
-        }}
-        title={post.title.rendered}
-        dangerouslySetInnerHTML={{ __html: post.title.rendered || `(${post.slug})` }}
-      />
+      {/* Title + inline actions */}
+      <span style={{ flex: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: 15,
+          }}
+          title={post.title.rendered}
+          dangerouslySetInnerHTML={{ __html: post.title.rendered || `(${post.slug})` }}
+        />
+
+        {/* Actions: full set when active, hover-only Edit/View otherwise */}
+        {isActive ? (
+          <NodeActions post={post} nodeId={node.id} />
+        ) : (
+          <span className="wptv-node-actions">
+            <a
+              href={editUrl}
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 15, color: '#2271b1', textDecoration: 'none' }}
+            >
+              Edit
+            </a>
+            {post.status === 'publish' && (
+              <>
+                <span style={{ color: '#ccc', margin: '0 3px' }}>|</span>
+                <a
+                  href={post.link}
+                  onClick={(e) => e.stopPropagation()}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 15, color: '#2271b1', textDecoration: 'none' }}
+                >
+                  View
+                </a>
+              </>
+            )}
+          </span>
+        )}
+      </span>
 
       {/* Status badge */}
       {post.status !== 'publish' && (
@@ -276,35 +306,6 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           }}
         >
           {post.status}
-        </span>
-      )}
-
-      {/* Actions: full set when active, hover-only Edit/View otherwise */}
-      {isActive ? (
-        <NodeActions post={post} nodeId={node.id} />
-      ) : (
-        <span className="wptv-node-actions">
-          <a
-            href={editUrl}
-            onClick={(e) => e.stopPropagation()}
-            style={{ fontSize: 15, color: '#2271b1', textDecoration: 'none' }}
-          >
-            Edit
-          </a>
-          {post.status === 'publish' && (
-            <>
-              <span style={{ color: '#ccc', margin: '0 3px' }}>|</span>
-              <a
-                href={post.link}
-                onClick={(e) => e.stopPropagation()}
-                target="_blank"
-                rel="noreferrer"
-                style={{ fontSize: 11, color: '#2271b1', textDecoration: 'none' }}
-              >
-                View
-              </a>
-            </>
-          )}
         </span>
       )}
     </div>
