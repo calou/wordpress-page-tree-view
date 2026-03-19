@@ -70,10 +70,10 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
       return;
     }
 
+    setIsSearching(true);
     let cancelled = false;
 
     const timer = setTimeout(async () => {
-      setIsSearching(true);
       try {
         const base = `wp/v2/${restBase}`;
 
@@ -211,7 +211,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   return (
     <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ padding: '0 4px 8px', flexShrink: 0, position: 'relative' }}>
+        <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
           <input
             type="search"
             placeholder="Search all pages…"
@@ -219,13 +219,14 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="wptv-search"
           />
-          {isSearching && (
-            <span
-              className="spinner is-active"
-              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, margin: 0 }}
-            />
-          )}
         </div>
+
+        {isSearching && (
+          <div style={{ padding: '8px 4px', color: '#787c82', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="spinner is-active" style={{ width: 12, height: 12, margin: 0, flexShrink: 0 }} />
+            Searching…
+          </div>
+        )}
 
         {isInSearch && searchResults!.length === 0 && !isSearching && (
           <div style={{ padding: '8px 4px', color: '#787c82', fontSize: 13 }}>
