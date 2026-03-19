@@ -90,6 +90,22 @@ export async function createPost(
 }
 
 /**
+ * Duplicate a post: creates a draft copy with the same parent and menu_order.
+ */
+export async function duplicatePost(restBase: string, post: WPPost): Promise<WPPost> {
+  return apiFetch<WPPost>({
+    path: `/${restBase}`,
+    method: 'POST',
+    data: {
+      title: `Copy of ${post.title.rendered || post.slug}`,
+      parent: post.parent,
+      menu_order: post.menu_order + 1,
+      status: 'draft',
+    },
+  });
+}
+
+/**
  * Restore a trashed post by setting its status back to draft.
  */
 export async function restorePost(restBase: string, id: number): Promise<WPPost> {

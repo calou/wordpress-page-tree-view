@@ -53,6 +53,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const onMove = useMove(restBase, tree, setTree);
 
   const [actionNodeId, setActionNodeId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
 
   if (isLoading) {
@@ -116,24 +117,39 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
 
   return (
     <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll }}>
-      <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-        <Tree<TreeNode>
-          ref={treeApiRef}
-          data={tree}
-          onMove={canEditAll ? handleMove : undefined}
-          disableDrag={!canEditAll}
-          disableDrop={!canEditAll}
-          onToggle={handleToggle}
-          width={width}
-          height={height}
-          rowHeight={38}
-          indent={20}
-          overscanCount={10}
-          openByDefault={false}
-          renderCursor={DropCursor}
-        >
-          {NodeRenderer}
-        </Tree>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
+          <input
+            type="search"
+            placeholder="Filter pages…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="wptv-search"
+          />
+        </div>
+        <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+          <Tree<TreeNode>
+            ref={treeApiRef}
+            data={tree}
+            onMove={canEditAll ? handleMove : undefined}
+            disableDrag={!canEditAll}
+            disableDrop={!canEditAll}
+            onToggle={handleToggle}
+            searchTerm={searchTerm}
+            searchMatch={(node, term) =>
+              node.data.name.toLowerCase().includes(term.toLowerCase())
+            }
+            width={width}
+            height={height}
+            rowHeight={38}
+            indent={20}
+            overscanCount={10}
+            openByDefault={false}
+            renderCursor={DropCursor}
+          >
+            {NodeRenderer}
+          </Tree>
+        </div>
       </div>
     </TreeContext.Provider>
   );

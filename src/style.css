@@ -6,6 +6,22 @@
   box-sizing: border-box;
 }
 
+/* Search / filter input */
+.wptv-search {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 13px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.wptv-search:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
 /* Tab bar */
 .nav-tab-wrapper .nav-tab {
   font-size: 14px;

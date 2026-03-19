@@ -2,12 +2,13 @@ import React, { useState, useCallback } from 'react';
 import type { NodeRendererProps } from 'react-arborist';
 import type { TreeNode, WPPost } from '../types';
 import { useTreeContext } from '../context/TreeContext';
-import { createPost, trashPost, restorePost } from '../api/wp';
+import { createPost, duplicatePost, trashPost, restorePost } from '../api/wp';
 import {
   addChildToNode,
   addSiblingBefore,
   addSiblingAfter,
   updateNodeInTree,
+  htmlToText,
 } from '../utils/treeUtils';
 
 const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
@@ -22,18 +23,11 @@ const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
 function toCreatedNode(post: WPPost): TreeNode {
   return {
     id: String(post.id),
-    name: post.title.rendered || `(${post.slug})`,
+    name: htmlToText(post.title.rendered) || `(${post.slug})`,
     children: undefined,
     childrenLoaded: true,
     data: post,
   };
-}
-
-/** Decode HTML entities and strip tags from a WordPress rendered title. */
-function htmlToText(html: string): string {
-  const el = document.createElement('span');
-  el.innerHTML = html;
-  return el.textContent ?? html;
 }
 
 interface NodeActionsProps {
@@ -100,6 +94,16 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         parent: post.parent,
         menu_order: post.menu_order + 1,
       });
+      setTree((prev) => addSiblingAfter(prev, nodeId, toCreatedNode(newPost)));
+      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
+      setActionNodeId(null);
+    });
+  };
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      const newPost = await duplicatePost(`wp/v2/${restBase}`, post);
       setTree((prev) => addSiblingAfter(prev, nodeId, toCreatedNode(newPost)));
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
       setActionNodeId(null);
@@ -175,6 +179,8 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
       <button style={base} onMouseDown={stop} onClick={handleAddBefore}>+Before</button>
       {sep}
       <button style={base} onMouseDown={stop} onClick={handleAddAfter}>+After</button>
+      {sep}
+      <button style={base} onMouseDown={stop} onClick={handleDuplicate}>Duplicate</button>
       {sep}
       <a
         href={`${adminUrl}post.php?post=${post.id}&action=edit`}
@@ -290,9 +296,9 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             whiteSpace: 'nowrap',
             fontSize: 15,
           }}
-          title={htmlToText(post.title.rendered)}
+          title={node.data.name}
         >
-          {htmlToText(post.title.rendered) || `(${post.slug})`}
+          {node.data.name}
         </span>
 
         {/* Actions: full set when active, hover-only Edit/View otherwise */}

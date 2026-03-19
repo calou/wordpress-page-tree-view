@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchAllPosts, fetchChildren } from '../api/wp';
+import { htmlToText } from '../utils/treeUtils';
 import type { WPPost, TreeNode } from '../types';
+
+function postTitle(post: WPPost): string {
+  return htmlToText(post.title.rendered) || `(${post.slug})`;
+}
 
 function toNode(post: WPPost): TreeNode {
   return {
     id: String(post.id),
-    name: post.title.rendered || `(${post.slug})`,
+    name: postTitle(post),
     children: [],        // [] = expandable, children not yet fetched
     childrenLoaded: false,
     data: post,
@@ -19,7 +24,7 @@ function buildTree(posts: WPPost[]): TreeNode[] {
   for (const post of posts) {
     nodeMap.set(post.id, {
       id: String(post.id),
-      name: post.title.rendered || `(${post.slug})`,
+      name: postTitle(post),
       children: undefined, // flat types have no hierarchy
       childrenLoaded: true,
       data: post,
@@ -130,25 +135,32 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
           }))
         );
 
-        // Preemptively load grandchildren concurrently in the background
+        // Preemptively load grandchildren concurrently, then apply all results in one setTree
         if (childNodes) {
-          Promise.all(
+          Promise.allSettled(
             childNodes.map((child) =>
               fetchChildren(`wp/v2/${restBase}`, parseInt(child.id, 10))
-                .then((grandchildPosts) => {
-                  setTree((prev) =>
-                    updateNode(prev, child.id, (n) => ({
-                      ...n,
-                      childrenLoaded: true,
-                      children: grandchildPosts.length > 0 ? grandchildPosts.map(toNode) : undefined,
-                    }))
-                  );
-                })
-                .catch(() => {
-                  // Silently ignore — user can still trigger the load manually by expanding
-                })
+                .then((posts) => ({ id: child.id, posts }))
             )
-          );
+          ).then((results) => {
+            const loaded = results
+              .filter((r): r is PromiseFulfilledResult<{ id: string; posts: WPPost[] }> => r.status === 'fulfilled')
+              .map((r) => r.value);
+
+            if (loaded.length === 0) return;
+
+            setTree((prev) => {
+              let next = prev;
+              for (const { id, posts } of loaded) {
+                next = updateNode(next, id, (n) => ({
+                  ...n,
+                  childrenLoaded: true,
+                  children: posts.length > 0 ? posts.map(toNode) : undefined,
+                }));
+              }
+              return next;
+            });
+          });
         }
       } catch {
         // On error, revert loading state so user can retry by collapsing/expanding

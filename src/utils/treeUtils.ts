@@ -1,5 +1,12 @@
 import type { TreeNode } from '../types';
 
+/** Decode HTML entities and strip tags — use at node-creation time, not in render. */
+export function htmlToText(html: string): string {
+  const el = document.createElement('span');
+  el.innerHTML = html;
+  return el.textContent ?? html;
+}
+
 /** Recursively add newNode as the last child of the node with parentId. */
 export function addChildToNode(
   tree: TreeNode[],
