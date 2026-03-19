@@ -85,17 +85,17 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
     const load = hierarchical
       // Hierarchical: load only top-level pages (parent=0) up front
       ? fetchAllPosts(
-          `wp/v2/${restBase}`,
-          undefined,
-          (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); },
-          0
-        ).then((posts) => posts.map(toNode))
+        `wp/v2/${restBase}`,
+        undefined,
+        (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); },
+        0
+      ).then((posts) => posts.map(toNode))
       // Flat: load everything and build the full tree at once
       : fetchAllPosts(
-          `wp/v2/${restBase}`,
-          undefined,
-          (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); }
-        ).then(buildTree);
+        `wp/v2/${restBase}`,
+        undefined,
+        (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); }
+      ).then(buildTree);
 
     load
       .then((nodes) => { if (!cancelled) setTree(nodes); })
@@ -130,23 +130,25 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
           }))
         );
 
-        // Preemptively load grandchildren in the background
+        // Preemptively load grandchildren concurrently in the background
         if (childNodes) {
-          for (const child of childNodes) {
-            fetchChildren(`wp/v2/${restBase}`, parseInt(child.id, 10))
-              .then((grandchildPosts) => {
-                setTree((prev) =>
-                  updateNode(prev, child.id, (n) => ({
-                    ...n,
-                    childrenLoaded: true,
-                    children: grandchildPosts.length > 0 ? grandchildPosts.map(toNode) : undefined,
-                  }))
-                );
-              })
-              .catch(() => {
-                // Silently ignore — user can still trigger the load manually by expanding
-              });
-          }
+          Promise.all(
+            childNodes.map((child) =>
+              fetchChildren(`wp/v2/${restBase}`, parseInt(child.id, 10))
+                .then((grandchildPosts) => {
+                  setTree((prev) =>
+                    updateNode(prev, child.id, (n) => ({
+                      ...n,
+                      childrenLoaded: true,
+                      children: grandchildPosts.length > 0 ? grandchildPosts.map(toNode) : undefined,
+                    }))
+                  );
+                })
+                .catch(() => {
+                  // Silently ignore — user can still trigger the load manually by expanding
+                })
+            )
+          );
         }
       } catch {
         // On error, revert loading state so user can retry by collapsing/expanding

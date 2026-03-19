@@ -2,20 +2,20 @@ import React, { useState, useCallback } from 'react';
 import type { NodeRendererProps } from 'react-arborist';
 import type { TreeNode, WPPost } from '../types';
 import { useTreeContext } from '../context/TreeContext';
-import { createPost, trashWithDescendants } from '../api/wp';
+import { createPost, trashPost, restorePost } from '../api/wp';
 import {
   addChildToNode,
   addSiblingBefore,
   addSiblingAfter,
-  removeNodeFromTree,
+  updateNodeInTree,
 } from '../utils/treeUtils';
 
 const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
   publish: { icon: 'dashicons-admin-page', color: '#787c82' },
   draft: { icon: 'dashicons-edit', color: '#dba617' },
   private: { icon: 'dashicons-lock', color: '#3858e9' },
-  pending: { icon: 'dashicons-clock',        color: '#996800' },
-  future:  { icon: 'dashicons-calendar-alt', color: '#2271b1' },
+  pending: { icon: 'dashicons-clock', color: '#996800' },
+  future: { icon: 'dashicons-calendar-alt', color: '#2271b1' },
   trash: { icon: 'dashicons-trash', color: '#d63638' },
 };
 
@@ -109,14 +109,28 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
   const handleTrash = (e: React.MouseEvent) => {
     stop(e);
     run(async () => {
-      if (
-        !window.confirm(
-          `Move "${post.title.rendered || post.slug}" and all its descendants to trash?`
-        )
-      )
-        return;
-      await trashWithDescendants(`wp/v2/${restBase}`, post.id);
-      setTree((prev) => removeNodeFromTree(prev, nodeId));
+      if (!window.confirm(`Move "${post.title.rendered || post.slug}" to trash?`)) return;
+      await trashPost(`wp/v2/${restBase}`, post.id);
+      setTree((prev) =>
+        updateNodeInTree(prev, nodeId, (n) => ({
+          ...n,
+          data: { ...n.data, status: 'trash' },
+        }))
+      );
+      setActionNodeId(null);
+    });
+  };
+
+  const handleRestore = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      await restorePost(`wp/v2/${restBase}`, post.id);
+      setTree((prev) =>
+        updateNodeInTree(prev, nodeId, (n) => ({
+          ...n,
+          data: { ...n.data, status: 'draft' },
+        }))
+      );
       setActionNodeId(null);
     });
   };
@@ -135,6 +149,20 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     pointerEvents: busy ? 'none' : 'auto',
     flexShrink: 0,
   };
+
+  if (post.status === 'trash') {
+    return (
+      <span
+        style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button style={{ ...base, color: '#00a32a' }} onMouseDown={stop} onClick={handleRestore}>
+          Restore
+        </button>
+      </span>
+    );
+  }
 
   return (
     <span

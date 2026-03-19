@@ -61,14 +61,17 @@ export function addSiblingAfter(
   });
 }
 
-/** Recursively remove the node with nodeId from the tree. */
-export function removeNodeFromTree(tree: TreeNode[], nodeId: string): TreeNode[] {
-  return tree
-    .filter((node) => node.id !== nodeId)
-    .map((node) => {
-      if (node.children?.length) {
-        return { ...node, children: removeNodeFromTree(node.children, nodeId) };
-      }
-      return node;
-    });
+/** Recursively apply an updater to the node with nodeId. */
+export function updateNodeInTree(
+  tree: TreeNode[],
+  nodeId: string,
+  updater: (n: TreeNode) => TreeNode
+): TreeNode[] {
+  return tree.map((node) => {
+    if (node.id === nodeId) return updater(node);
+    if (node.children?.length) {
+      return { ...node, children: updateNodeInTree(node.children, nodeId, updater) };
+    }
+    return node;
+  });
 }

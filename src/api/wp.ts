@@ -93,6 +93,17 @@ export async function createPost(
 }
 
 /**
+ * Restore a trashed post by setting its status back to draft.
+ */
+export async function restorePost(restBase: string, id: number): Promise<WPPost> {
+  return apiFetch<WPPost>({
+    path: `/${restBase}/${id}`,
+    method: 'POST',
+    data: { status: 'draft' },
+  } as ApiFetchOptions);
+}
+
+/**
  * Trash a single post (DELETE sends it to trash in WordPress).
  */
 export async function trashPost(restBase: string, id: number): Promise<WPPost> {
@@ -100,15 +111,6 @@ export async function trashPost(restBase: string, id: number): Promise<WPPost> {
     path: `/${restBase}/${id}`,
     method: 'DELETE',
   } as ApiFetchOptions);
-}
-
-/**
- * Recursively trash a post and all its descendants (deepest-first, siblings in parallel).
- */
-export async function trashWithDescendants(restBase: string, id: number): Promise<void> {
-  const children = await fetchChildren(restBase, id);
-  await Promise.all(children.map((child) => trashWithDescendants(restBase, child.id)));
-  await trashPost(restBase, id);
 }
 
 /**
