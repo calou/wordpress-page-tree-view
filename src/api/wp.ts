@@ -1,9 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import type { WPPost, ContentType } from '../types';
 
-// @wordpress/api-fetch types are loose; this helps bridge them
-type ApiFetchOptions = Parameters<typeof apiFetch>[0];
-
 const PER_PAGE = 100;
 const STATUS = 'publish,draft,private,pending,future,trash';
 
@@ -18,10 +15,10 @@ export async function fetchAllPosts(
 ): Promise<WPPost[]> {
   const baseQuery = `per_page=${PER_PAGE}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}${parent !== undefined ? `&parent=${parent}` : ''}`;
 
-  const response = await apiFetch<WPPost[]>({
+  const response = await apiFetch<WPPost[], false>({
     path: `/${restBase}?${baseQuery}&page=1`,
     parse: false,
-  } as ApiFetchOptions);
+  });
 
   // apiFetch with parse:false returns a Response object
   const res = response as unknown as Response;
@@ -45,7 +42,7 @@ export async function fetchAllPosts(
     remainingPages.map(async (page) => {
       const data = await apiFetch<WPPost[]>({
         path: `/${restBase}?${baseQuery}&page=${page}`,
-      } as ApiFetchOptions);
+      });
       loaded += data.length;
       onProgress?.(loaded, total);
       return data;
@@ -66,7 +63,7 @@ export async function fetchChildren(
 ): Promise<WPPost[]> {
   return apiFetch<WPPost[]>({
     path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}`,
-  } as ApiFetchOptions);
+  });
 }
 
 /**
@@ -75,7 +72,7 @@ export async function fetchChildren(
 export async function fetchPostTypes(): Promise<Record<string, ContentType>> {
   return apiFetch<Record<string, ContentType>>({
     path: '/wp/v2/types',
-  } as ApiFetchOptions);
+  });
 }
 
 /**
@@ -89,7 +86,7 @@ export async function createPost(
     path: `/${restBase}`,
     method: 'POST',
     data: { status: 'draft', ...data },
-  } as ApiFetchOptions);
+  });
 }
 
 /**
@@ -100,7 +97,7 @@ export async function restorePost(restBase: string, id: number): Promise<WPPost>
     path: `/${restBase}/${id}`,
     method: 'POST',
     data: { status: 'draft' },
-  } as ApiFetchOptions);
+  });
 }
 
 /**
@@ -110,7 +107,7 @@ export async function trashPost(restBase: string, id: number): Promise<WPPost> {
   return apiFetch<WPPost>({
     path: `/${restBase}/${id}`,
     method: 'DELETE',
-  } as ApiFetchOptions);
+  });
 }
 
 /**
@@ -129,5 +126,5 @@ export async function movePost(
       parent: parentId,
       menu_order: menuOrder,
     },
-  } as ApiFetchOptions);
+  });
 }
