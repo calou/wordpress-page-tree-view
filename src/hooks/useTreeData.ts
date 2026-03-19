@@ -120,15 +120,36 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
           parseInt(nodeId, 10)
         );
 
+        const childNodes = posts.length > 0 ? posts.map(toNode) : undefined;
+
         setTree((prev) =>
           updateNode(prev, nodeId, (n) => ({
             ...n,
             isLoadingChildren: false,
             childrenLoaded: true,
             // undefined = confirmed leaf; [] would keep toggle but stay empty
-            children: posts.length > 0 ? posts.map(toNode) : undefined,
+            children: childNodes,
           }))
         );
+
+        // Preemptively load grandchildren in the background
+        if (childNodes) {
+          for (const child of childNodes) {
+            fetchChildren(`wp/v2/${restBase}`, parseInt(child.id, 10))
+              .then((grandchildPosts) => {
+                setTree((prev) =>
+                  updateNode(prev, child.id, (n) => ({
+                    ...n,
+                    childrenLoaded: true,
+                    children: grandchildPosts.length > 0 ? grandchildPosts.map(toNode) : undefined,
+                  }))
+                );
+              })
+              .catch(() => {
+                // Silently ignore — user can still trigger the load manually by expanding
+              });
+          }
+        }
       } catch {
         // On error, revert loading state so user can retry by collapsing/expanding
         setTree((prev) =>
