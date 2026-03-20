@@ -120,8 +120,8 @@ export async function searchPosts(
  * Duplicate a post: fetches full content then creates a draft copy.
  */
 export async function duplicatePost(restBase: string, post: WPPost): Promise<WPPost> {
-  const full = await apiFetch<{ content: { raw: string } }>({
-    path: `/${restBase}/${post.id}?context=edit&_fields=content`,
+  const full = await apiFetch<{ content: { raw: string }; meta: Record<string, unknown> }>({
+    path: `/${restBase}/${post.id}?context=edit&_fields=content,meta`,
   });
   return apiFetch<WPPost>({
     path: `/${restBase}`,
@@ -129,6 +129,7 @@ export async function duplicatePost(restBase: string, post: WPPost): Promise<WPP
     data: {
       title: `Copy of ${post.title.rendered || post.slug}`,
       content: full.content.raw,
+      meta: full.meta,
       parent: post.parent,
       menu_order: post.menu_order + 1,
       status: 'draft',
