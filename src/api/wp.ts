@@ -117,14 +117,18 @@ export async function searchPosts(
 }
 
 /**
- * Duplicate a post: creates a draft copy with the same parent and menu_order.
+ * Duplicate a post: fetches full content then creates a draft copy.
  */
 export async function duplicatePost(restBase: string, post: WPPost): Promise<WPPost> {
+  const full = await apiFetch<{ content: { raw: string } }>({
+    path: `/${restBase}/${post.id}?context=edit&_fields=content`,
+  });
   return apiFetch<WPPost>({
     path: `/${restBase}`,
     method: 'POST',
     data: {
       title: `Copy of ${post.title.rendered || post.slug}`,
+      content: full.content.raw,
       parent: post.parent,
       menu_order: post.menu_order + 1,
       status: 'draft',
