@@ -234,7 +234,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
           </div>
         )}
 
-        <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div ref={containerRef} style={{ flex: 1, overflow: 'hidden', minHeight: 0, margin: "4px", padding: "12px", backgroundColor: "#FFF", borderRadius: "12px" }}>
           <Tree<TreeNode>
             ref={treeApiRef}
             data={isInSearch ? searchResults! : tree}

@@ -237,7 +237,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
   const outline = node.willReceiveDrop ? '2px solid #2271b1' : 'none';
 
   const handleRowClick = useCallback(
-    (e: React.MouseEvent) => {
+    (_: React.MouseEvent) => {
       setActionNodeId(isActive ? null : node.id);
     },
     [isActive, node.id, setActionNodeId]
