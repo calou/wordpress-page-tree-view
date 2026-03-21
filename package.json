@@ -1,7 +1,7 @@
 {
-  "name": "wordpress-wasm-tree-view",
+  "name": "wordpress-page-tree-view",
   "version": "1.0.0",
-  "description": "WordPress admin tree view plugin for pages, posts, and custom post types",
+  "description": "WordPress admin tree view plugin for pages",
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",

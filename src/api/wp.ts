@@ -159,6 +159,35 @@ export async function trashPost(restBase: string, id: number): Promise<WPPost> {
 }
 
 /**
+ * Duplicate a post and all its descendants server-side.
+ * Returns the root ID of the new subtree and a flat list of all created posts.
+ */
+export async function duplicateSubtree(
+  id: number
+): Promise<{ root_id: number; posts: WPPost[] }> {
+  return apiFetch<{ root_id: number; posts: WPPost[] }>({
+    path: '/wptv/v1/duplicate-subtree',
+    method: 'POST',
+    data: { id },
+  });
+}
+
+/**
+ * Apply a status to a post and all its descendants via the custom bulk-status endpoint.
+ * Returns the list of updated post IDs.
+ */
+export async function bulkUpdateStatus(
+  id: number,
+  status: string
+): Promise<{ updated: number[] }> {
+  return apiFetch<{ updated: number[] }>({
+    path: '/wptv/v1/bulk-status',
+    method: 'POST',
+    data: { id, status },
+  });
+}
+
+/**
  * Move a post by updating its parent and menu_order.
  */
 export async function movePost(

@@ -68,6 +68,29 @@ export function addSiblingAfter(
   });
 }
 
+/** Recursively apply an updater to every node in a subtree. */
+function applyToSubtree(node: TreeNode, updater: (n: TreeNode) => TreeNode): TreeNode {
+  if (!node.children?.length) return node;
+  return { ...node, children: node.children.map((c) => applyToSubtree(updater(c), updater)) };
+}
+
+/**
+ * Recursively apply an updater to the node with nodeId and all its loaded descendants.
+ */
+export function updateSubtreeInTree(
+  tree: TreeNode[],
+  nodeId: string,
+  updater: (n: TreeNode) => TreeNode
+): TreeNode[] {
+  return tree.map((node) => {
+    if (node.id === nodeId) return applyToSubtree(updater(node), updater);
+    if (node.children?.length) {
+      return { ...node, children: updateSubtreeInTree(node.children, nodeId, updater) };
+    }
+    return node;
+  });
+}
+
 /** Recursively apply an updater to the node with nodeId. */
 export function updateNodeInTree(
   tree: TreeNode[],

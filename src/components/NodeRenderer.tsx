@@ -2,12 +2,13 @@ import React, { useState, useCallback } from 'react';
 import type { NodeRendererProps } from 'react-arborist';
 import type { TreeNode, WPPost } from '../types';
 import { useTreeContext } from '../context/TreeContext';
-import { createPost, duplicatePost, trashPost, restorePost } from '../api/wp';
+import { createPost, duplicatePost, duplicateSubtree, trashPost, restorePost, bulkUpdateStatus } from '../api/wp';
 import {
   addChildToNode,
   addSiblingBefore,
   addSiblingAfter,
   updateNodeInTree,
+  updateSubtreeInTree,
   htmlToText,
 } from '../utils/treeUtils';
 
@@ -28,6 +29,19 @@ function toCreatedNode(post: WPPost): TreeNode {
     childrenLoaded: true,
     data: post,
   };
+}
+
+function buildSubtreeNodes(posts: import('../types').WPPost[], parentId: number): TreeNode[] {
+  return posts
+    .filter((p) => p.parent === parentId)
+    .sort((a, b) => a.menu_order - b.menu_order)
+    .map((p) => ({
+      id: String(p.id),
+      name: htmlToText(p.title.rendered) || `(${p.slug})`,
+      children: buildSubtreeNodes(posts, p.id),
+      childrenLoaded: true,
+      data: p,
+    }));
 }
 
 interface NodeActionsProps {
@@ -110,6 +124,23 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     });
   };
 
+  const handleDuplicateAll = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      const { root_id, posts } = await duplicateSubtree(post.id);
+      const rootPost = posts.find((p) => p.id === root_id)!;
+      const rootNode: TreeNode = {
+        id: String(rootPost.id),
+        name: htmlToText(rootPost.title.rendered) || `(${rootPost.slug})`,
+        children: buildSubtreeNodes(posts, rootPost.id),
+        childrenLoaded: true,
+        data: rootPost,
+      };
+      setTree((prev) => addSiblingAfter(prev, nodeId, rootNode));
+      setActionNodeId(null);
+    });
+  };
+
   const handleTrash = (e: React.MouseEvent) => {
     stop(e);
     run(async () => {
@@ -126,12 +157,44 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     });
   };
 
+  const handleTrashAll = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      if (!window.confirm(`Move "${post.title.rendered || post.slug}" and all its descendants to trash?`)) return;
+      await bulkUpdateStatus(post.id, 'trash');
+      setTree((prev) =>
+        updateSubtreeInTree(prev, nodeId, (n) => ({
+          ...n,
+          data: { ...n.data, status: 'trash' },
+        }))
+      );
+      setActionNodeId(null);
+      clearSearch();
+    });
+  };
+
   const handleRestore = (e: React.MouseEvent) => {
     stop(e);
     run(async () => {
       await restorePost(`wp/v2/${restBase}`, post.id);
       setTree((prev) =>
         updateNodeInTree(prev, nodeId, (n) => ({
+          ...n,
+          data: { ...n.data, status: 'draft' },
+        }))
+      );
+      setActionNodeId(null);
+      clearSearch();
+    });
+  };
+
+  const handleRestoreAll = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      if (!window.confirm(`Restore "${post.title.rendered || post.slug}" and all its descendants?`)) return;
+      await bulkUpdateStatus(post.id, 'draft');
+      setTree((prev) =>
+        updateSubtreeInTree(prev, nodeId, (n) => ({
           ...n,
           data: { ...n.data, status: 'draft' },
         }))
@@ -166,6 +229,10 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         <button style={{ ...base, color: '#00a32a' }} onMouseDown={stop} onClick={handleRestore}>
           Restore
         </button>
+        {sep}
+        <button style={{ ...base, color: '#00a32a' }} onMouseDown={stop} onClick={handleRestoreAll}>
+          Restore all under
+        </button>
       </span>
     );
   }
@@ -183,6 +250,8 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
       <button style={base} onMouseDown={stop} onClick={handleAddAfter}>+After</button>
       {sep}
       <button style={base} onMouseDown={stop} onClick={handleDuplicate}>Duplicate</button>
+      {sep}
+      <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate all under</button>
       {sep}
       <a
         href={`${adminUrl}post.php?post=${post.id}&action=edit`}
@@ -214,6 +283,14 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         onClick={handleTrash}
       >
         Trash
+      </button>
+      {sep}
+      <button
+        style={{ ...base, color: '#d63638' }}
+        onMouseDown={stop}
+        onClick={handleTrashAll}
+      >
+        Trash all under
       </button>
     </span>
   );
