@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import type { NodeRendererProps } from 'react-arborist';
 import type { TreeNode, WPPost } from '../types';
 import { useTreeContext } from '../context/TreeContext';
-import { createPost, duplicatePost, duplicateSubtree, trashPost, restorePost, bulkUpdateStatus } from '../api/wp';
+import { createPost, duplicatePost, duplicateSubtree, trashPost, restorePost, bulkUpdateStatus, exportSubtree } from '../api/wp';
 import {
   addChildToNode,
   addSiblingBefore,
@@ -204,6 +204,28 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     });
   };
 
+  const handlePublishAll = (e: React.MouseEvent) => {
+    stop(e);
+    run(async () => {
+      if (!window.confirm(`Publish "${post.title.rendered || post.slug}" and all its descendants?`)) return;
+      await bulkUpdateStatus(post.id, 'publish');
+      setTree((prev) =>
+        updateSubtreeInTree(prev, nodeId, (n) => ({
+          ...n,
+          data: { ...n.data, status: 'publish' },
+        }))
+      );
+      setActionNodeId(null);
+      clearSearch();
+    });
+  };
+
+  const handleExportAll = (e: React.MouseEvent) => {
+    stop(e);
+    exportSubtree(post.id);
+    setActionNodeId(null);
+  };
+
   const sep = <span style={{ color: '#ddd', userSelect: 'none' }}>|</span>;
 
   const base: React.CSSProperties = {
@@ -292,6 +314,26 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
       >
         Trash all under
       </button>
+      {(post.status === 'draft' || post.status === 'publish') && (
+        <>
+          {sep}
+          <button
+            style={{ ...base, color: '#00a32a' }}
+            onMouseDown={stop}
+            onClick={handlePublishAll}
+          >
+            Publish all under
+          </button>
+          {sep}
+          <button
+            style={base}
+            onMouseDown={stop}
+            onClick={handleExportAll}
+          >
+            Export all under
+          </button>
+        </>
+      )}
     </span>
   );
 }

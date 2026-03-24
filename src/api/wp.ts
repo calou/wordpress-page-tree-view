@@ -188,6 +188,16 @@ export async function bulkUpdateStatus(
 }
 
 /**
+ * Export a post and all its descendants as a WXR file download.
+ * Opens the admin-post.php export URL directly (the server streams XML).
+ */
+export function exportSubtree(id: number): void {
+  const adminUrl = window.wptvConfig?.adminUrl ?? '';
+  const nonce = window.wptvConfig?.exportNonce ?? '';
+  window.location.href = `${adminUrl}admin-post.php?action=wptv_export_subtree&id=${id}&_wpnonce=${nonce}`;
+}
+
+/**
  * Move a post by updating its parent and menu_order.
  */
 export async function movePost(

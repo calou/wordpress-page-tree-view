@@ -83,6 +83,7 @@ function wptv_enqueue_assets( string $hook_suffix ): void {
             'restUrl'     => rest_url(),
             'adminUrl'    => admin_url(),
             'canEditAll'  => current_user_can( 'edit_others_pages' ),
+            'exportNonce' => wp_create_nonce( 'wptv_export_subtree' ),
         ]
     );
 }
@@ -137,6 +138,11 @@ function wptv_register_routes(): void {
     );
 }
 add_action( 'rest_api_init', 'wptv_register_routes' );
+
+/**
+ * Handle WXR subtree export via admin-post.php (not REST, so we can stream raw XML).
+ */
+add_action( 'admin_post_wptv_export_subtree', 'wptv_export_subtree_handler' );
 
 /**
  * Collect all posts in a subtree using BFS (avoids deep recursion on large trees).
@@ -422,4 +428,191 @@ function wptv_duplicate_subtree_handler( WP_REST_Request $request ): WP_REST_Res
         ],
         201
     );
+}
+
+/**
+ * Wrap a string in a CDATA section, escaping nested CDATA terminators.
+ * Mirrors the wxr_cdata() helper defined inside WordPress's export_wp().
+ *
+ * @param string|null $str
+ * @return string
+ */
+function wptv_wxr_cdata( ?string $str ): string {
+    $str = (string) $str;
+    if ( ! wp_is_valid_utf8( $str ) ) {
+        $str = mb_convert_encoding( $str, 'UTF-8', 'UTF-8' );
+    }
+    return '<![CDATA[' . str_replace( ']]>', ']]]]><![CDATA[>', $str ) . ']]>';
+}
+
+/**
+ * Handle WXR export for a post and all its descendants.
+ *
+ * Generates a WordPress eXtended RSS (WXR 1.2) file matching the structure
+ * produced by the built-in export_wp() — including comments, taxonomies,
+ * attachments, and post meta — but scoped to a single subtree.
+ *
+ * We cannot reuse export_wp() directly because it does not support filtering
+ * by an arbitrary set of post IDs; it only accepts post-type / author /
+ * category / date-range / status filters with no hook to inject custom IDs.
+ *
+ */
+function wptv_export_subtree_handler(): void {
+    global $wpdb;
+
+    if ( ! current_user_can( 'edit_others_pages' ) ) {
+        wp_die( 'Unauthorized', 403 );
+    }
+
+    check_admin_referer( 'wptv_export_subtree' );
+
+    $id   = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+    $root = $id ? get_post( $id ) : null;
+
+    if ( ! $root ) {
+        wp_die( 'Post not found', 404 );
+    }
+
+    $posts    = wptv_collect_subtree_posts( $root );
+    $post_ids = array_column( $posts, 'ID' );
+
+    // --- Authors -------------------------------------------------------
+    $author_ids = array_unique( array_column( $posts, 'post_author' ) );
+    $authors    = array_filter( array_map( 'get_userdata', $author_ids ) );
+
+    // --- Stream XML directly -------------------------------------------
+    $wxr_version = '1.2';
+    $charset     = get_option( 'blog_charset' );
+    $slug        = sanitize_file_name( $root->post_name ?: 'export' );
+
+    header( 'Content-Description: File Transfer' );
+    header( 'Content-Disposition: attachment; filename=' . $slug . '-subtree.xml' );
+    header( 'Content-Type: text/xml; charset=' . $charset, true );
+
+    echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . "\" ?>\n";
+    ?>
+<rss version="2.0"
+  xmlns:excerpt="http://wordpress.org/export/<?php echo $wxr_version; ?>/excerpt/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:wp="http://wordpress.org/export/<?php echo $wxr_version; ?>/"
+>
+<channel>
+  <title><?php echo wptv_wxr_cdata( get_bloginfo_rss( 'name' ) ); ?></title>
+  <link><?php bloginfo_rss( 'url' ); ?></link>
+  <description><?php bloginfo_rss( 'description' ); ?></description>
+  <pubDate><?php echo gmdate( 'D, d M Y H:i:s +0000' ); ?></pubDate>
+  <language><?php bloginfo_rss( 'language' ); ?></language>
+  <wp:wxr_version><?php echo $wxr_version; ?></wp:wxr_version>
+  <wp:base_site_url><?php echo esc_url( is_multisite() ? network_home_url() : get_bloginfo_rss( 'url' ) ); ?></wp:base_site_url>
+  <wp:base_blog_url><?php bloginfo_rss( 'url' ); ?></wp:base_blog_url>
+<?php foreach ( $authors as $author ) : ?>
+  <wp:author>
+    <wp:author_id><?php echo (int) $author->ID; ?></wp:author_id>
+    <wp:author_login><?php echo wptv_wxr_cdata( $author->user_login ); ?></wp:author_login>
+    <wp:author_email><?php echo wptv_wxr_cdata( $author->user_email ); ?></wp:author_email>
+    <wp:author_display_name><?php echo wptv_wxr_cdata( $author->display_name ); ?></wp:author_display_name>
+    <wp:author_first_name><?php echo wptv_wxr_cdata( $author->first_name ); ?></wp:author_first_name>
+    <wp:author_last_name><?php echo wptv_wxr_cdata( $author->last_name ); ?></wp:author_last_name>
+  </wp:author>
+<?php endforeach; ?>
+<?php
+    // Process posts in chunks to keep memory usage reasonable.
+    while ( $chunk = array_splice( $post_ids, 0, 20 ) ) {
+        $in    = implode( ',', array_map( 'intval', $chunk ) );
+        $rows  = $wpdb->get_results( "SELECT * FROM {$wpdb->posts} WHERE ID IN ($in)" );
+
+        foreach ( $rows as $post ) {
+            setup_postdata( $post );
+            $is_sticky = is_sticky( $post->ID ) ? 1 : 0;
+            ?>
+  <item>
+    <title><?php echo wptv_wxr_cdata( $post->post_title ); ?></title>
+    <link><?php echo esc_url( get_permalink( $post->ID ) ); ?></link>
+    <pubDate><?php echo mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true, $post ), false ); ?></pubDate>
+    <dc:creator><?php echo wptv_wxr_cdata( get_the_author_meta( 'login', $post->post_author ) ); ?></dc:creator>
+    <guid isPermaLink="false"><?php the_guid( $post ); ?></guid>
+    <description></description>
+    <content:encoded><?php echo wptv_wxr_cdata( $post->post_content ); ?></content:encoded>
+    <excerpt:encoded><?php echo wptv_wxr_cdata( $post->post_excerpt ); ?></excerpt:encoded>
+    <wp:post_id><?php echo (int) $post->ID; ?></wp:post_id>
+    <wp:post_date><?php echo wptv_wxr_cdata( $post->post_date ); ?></wp:post_date>
+    <wp:post_date_gmt><?php echo wptv_wxr_cdata( $post->post_date_gmt ); ?></wp:post_date_gmt>
+    <wp:post_modified><?php echo wptv_wxr_cdata( $post->post_modified ); ?></wp:post_modified>
+    <wp:post_modified_gmt><?php echo wptv_wxr_cdata( $post->post_modified_gmt ); ?></wp:post_modified_gmt>
+    <wp:comment_status><?php echo wptv_wxr_cdata( $post->comment_status ); ?></wp:comment_status>
+    <wp:ping_status><?php echo wptv_wxr_cdata( $post->ping_status ); ?></wp:ping_status>
+    <wp:post_name><?php echo wptv_wxr_cdata( $post->post_name ); ?></wp:post_name>
+    <wp:status><?php echo wptv_wxr_cdata( $post->post_status ); ?></wp:status>
+    <wp:post_parent><?php echo (int) $post->post_parent; ?></wp:post_parent>
+    <wp:menu_order><?php echo (int) $post->menu_order; ?></wp:menu_order>
+    <wp:post_type><?php echo wptv_wxr_cdata( $post->post_type ); ?></wp:post_type>
+    <wp:post_password><?php echo wptv_wxr_cdata( $post->post_password ); ?></wp:post_password>
+    <wp:is_sticky><?php echo (int) $is_sticky; ?></wp:is_sticky>
+<?php if ( 'attachment' === $post->post_type ) : ?>
+    <wp:attachment_url><?php echo wptv_wxr_cdata( wp_get_attachment_url( $post->ID ) ); ?></wp:attachment_url>
+<?php endif; ?>
+<?php
+            // Taxonomies.
+            $taxonomies = get_object_taxonomies( $post->post_type );
+            if ( ! empty( $taxonomies ) ) {
+                $terms = wp_get_object_terms( $post->ID, $taxonomies );
+                foreach ( (array) $terms as $term ) {
+                    echo '    <category domain="' . esc_attr( $term->taxonomy ) . '" nicename="' . esc_attr( $term->slug ) . '">' . wptv_wxr_cdata( $term->name ) . "</category>\n";
+                }
+            }
+
+            // Post meta.
+            $postmeta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE post_id = %d", $post->ID ) );
+            foreach ( $postmeta as $meta ) {
+                if ( '_edit_lock' === $meta->meta_key ) {
+                    continue;
+                }
+                ?>
+    <wp:postmeta>
+      <wp:meta_key><?php echo wptv_wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
+      <wp:meta_value><?php echo wptv_wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
+    </wp:postmeta>
+<?php
+            }
+
+            // Comments.
+            $comments = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_approved <> 'spam'", $post->ID ) );
+            foreach ( array_map( 'get_comment', $comments ) as $c ) {
+                ?>
+    <wp:comment>
+      <wp:comment_id><?php echo (int) $c->comment_ID; ?></wp:comment_id>
+      <wp:comment_author><?php echo wptv_wxr_cdata( $c->comment_author ); ?></wp:comment_author>
+      <wp:comment_author_email><?php echo wptv_wxr_cdata( $c->comment_author_email ); ?></wp:comment_author_email>
+      <wp:comment_author_url><?php echo esc_url( $c->comment_author_url ); ?></wp:comment_author_url>
+      <wp:comment_author_IP><?php echo wptv_wxr_cdata( $c->comment_author_IP ); ?></wp:comment_author_IP>
+      <wp:comment_date><?php echo wptv_wxr_cdata( $c->comment_date ); ?></wp:comment_date>
+      <wp:comment_date_gmt><?php echo wptv_wxr_cdata( $c->comment_date_gmt ); ?></wp:comment_date_gmt>
+      <wp:comment_content><?php echo wptv_wxr_cdata( $c->comment_content ); ?></wp:comment_content>
+      <wp:comment_approved><?php echo wptv_wxr_cdata( $c->comment_approved ); ?></wp:comment_approved>
+      <wp:comment_type><?php echo wptv_wxr_cdata( $c->comment_type ); ?></wp:comment_type>
+      <wp:comment_parent><?php echo (int) $c->comment_parent; ?></wp:comment_parent>
+      <wp:comment_user_id><?php echo (int) $c->user_id; ?></wp:comment_user_id>
+<?php
+                $c_meta = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->commentmeta WHERE comment_id = %d", $c->comment_ID ) );
+                foreach ( $c_meta as $meta ) {
+                    ?>
+      <wp:commentmeta>
+        <wp:meta_key><?php echo wptv_wxr_cdata( $meta->meta_key ); ?></wp:meta_key>
+        <wp:meta_value><?php echo wptv_wxr_cdata( $meta->meta_value ); ?></wp:meta_value>
+      </wp:commentmeta>
+<?php           } ?>
+    </wp:comment>
+<?php       } ?>
+  </item>
+<?php
+        }
+    }
+    wp_reset_postdata();
+    ?>
+</channel>
+</rss>
+<?php
+    exit;
 }
