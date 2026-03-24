@@ -88,7 +88,19 @@ export function useMove(restBase: string, tree: TreeNode[], setTree: SetTree) {
         ...node,
         data: { ...node.data, parent: parentNumericId },
       }));
-      const newTree = insertNodes(remaining, updated, parentId, index);
+
+      // react-arborist gives the index relative to the original (pre-extraction)
+      // sibling list.  After extracting dragged nodes that sat *before* that index
+      // in the same parent, we must shift the insert position down accordingly.
+      const oldSiblings = getSiblings(snapshot, parentId);
+      let adjustedIndex = index;
+      for (let i = 0; i < index && i < oldSiblings.length; i++) {
+        if (idSet.has(oldSiblings[i].id)) {
+          adjustedIndex--;
+        }
+      }
+
+      const newTree = insertNodes(remaining, updated, parentId, adjustedIndex);
       const newSiblings = getSiblings(newTree, parentId);
 
       setTree(newTree);
