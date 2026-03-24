@@ -279,7 +279,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
         href={`${adminUrl}post.php?post=${post.id}&action=edit`}
         style={base}
         onMouseDown={stop}
-        onClick={(e) => { stop(e); setActionNodeId(null); }}
+        onClick={(e) => { e.stopPropagation(); setActionNodeId(null); }}
       >
         Edit
       </a>
@@ -292,7 +292,7 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
             rel="noreferrer"
             style={base}
             onMouseDown={stop}
-            onClick={(e) => { stop(e); setActionNodeId(null); }}
+            onClick={(e) => { e.stopPropagation(); setActionNodeId(null); }}
           >
             View
           </a>
