@@ -60,6 +60,20 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const [isSearching, setIsSearching] = useState(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
 
+  const storageKey = `wptv_open_${restBase}`;
+  const openIdsRef = useRef<Set<string>>(new Set());
+  const [pendingRestoreIds, setPendingRestoreIds] = useState<Set<string>>(() => {
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      if (stored) {
+        const ids = new Set<string>(JSON.parse(stored));
+        openIdsRef.current = new Set(ids);
+        return ids;
+      }
+    } catch {}
+    return new Set<string>();
+  });
+
   const clearSearch = useCallback(() => setSearchTerm(''), []);
 
   // Fetch matching pages + their full ancestor chains, then build a tree from them
@@ -147,6 +161,31 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
     };
   }, [searchTerm, restBase]);
 
+  // Restore open nodes from sessionStorage after tree data loads or new children arrive
+  useEffect(() => {
+    if (isLoading || !pendingRestoreIds.size || searchResults !== null) return;
+
+    const toOpen: string[] = [];
+    const visit = (nodes: TreeNode[]) => {
+      for (const node of nodes) {
+        if (pendingRestoreIds.has(node.id)) toOpen.push(node.id);
+        if (node.children?.length) visit(node.children);
+      }
+    };
+    visit(tree);
+
+    if (toOpen.length === 0) return;
+
+    for (const id of toOpen) {
+      treeApiRef.current?.open(id);
+    }
+    setPendingRestoreIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      for (const id of toOpen) next.delete(id);
+      return next;
+    });
+  }, [tree, isLoading, pendingRestoreIds, searchResults]);
+
   if (isLoading) {
     const label = progress
       ? `Loading ${progress.loaded.toLocaleString()} / ${progress.total.toLocaleString()}…`
@@ -203,6 +242,16 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
     const node = treeApiRef.current?.get(id);
     if (node?.isOpen && !node.data.childrenLoaded) {
       loadChildren(id);
+    }
+    if (node) {
+      if (node.isOpen) {
+        openIdsRef.current.add(id);
+      } else {
+        openIdsRef.current.delete(id);
+      }
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify([...openIdsRef.current]));
+      } catch {}
     }
   };
 
