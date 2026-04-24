@@ -11,15 +11,15 @@
   "dependencies": {
     "@wordpress/api-fetch": "^7.0.0",
     "react": "^18.0.0",
-    "react-arborist": "^3.4.0",
+    "react-arborist": "^3.5.0",
     "react-dom": "^18.0.0",
     "use-resize-observer": "^9.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "@wordpress/scripts": "^29.0.0",
-    "typescript": "^5.0.0"
+    "@wordpress/scripts": "^32.0.0",
+    "typescript": "^6.0.0"
   },
   "main": "build/index.js"
 }
