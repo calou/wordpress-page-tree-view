@@ -36,6 +36,18 @@ function wptv_add_admin_menu(): void {
 add_action( 'admin_menu', 'wptv_add_admin_menu' );
 
 /**
+ * Redirect the default Pages list to the Tree View page.
+ */
+function wptv_redirect_pages_list(): void {
+    global $pagenow;
+    if ( 'edit.php' === $pagenow && isset( $_GET['post_type'] ) && 'page' === $_GET['post_type'] ) {
+        wp_safe_redirect( admin_url( 'admin.php?page=wordpress-page-tree-view' ) );
+        exit;
+    }
+}
+add_action( 'admin_init', 'wptv_redirect_pages_list' );
+
+/**
  * Render the admin page HTML shell.
  */
 function wptv_render_admin_page(): void {
