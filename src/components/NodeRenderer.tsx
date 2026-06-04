@@ -420,7 +420,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           title={node.data.name}
         >
           {node.data.name}
-          {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Home page</i></small>) : (<span></span>)}
+          {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Home page</i></small>) : ''}
         </span>
 
         {/* Actions: full set when active, hover-only Edit/View otherwise */}
@@ -452,8 +452,6 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           </span>
         )}
       </span>
-
-
     </div>
   );
 }

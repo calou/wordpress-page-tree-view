@@ -912,7 +912,7 @@ function NodeRenderer({
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
             children: "\xA0-\xA0Home page"
           })
-        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {})]
+        }) : '']
       }), isActive ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(NodeActions, {
         post: post,
         nodeId: node.id
