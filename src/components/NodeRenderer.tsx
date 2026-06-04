@@ -75,7 +75,6 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     stop(e);
     run(async () => {
       const newPost = await createPost(`wp/v2/${restBase}`, {
-        title: 'Untitled',
         parent: post.id,
         menu_order: 0,
       });
@@ -90,7 +89,6 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     stop(e);
     run(async () => {
       const newPost = await createPost(`wp/v2/${restBase}`, {
-        title: 'Untitled',
         parent: post.parent,
         menu_order: post.menu_order,
       });
@@ -104,7 +102,6 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
     stop(e);
     run(async () => {
       const newPost = await createPost(`wp/v2/${restBase}`, {
-        title: 'Untitled',
         parent: post.parent,
         menu_order: post.menu_order + 1,
       });
@@ -389,7 +386,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           width: 16,
           flexShrink: 0,
           color: '#787c82',
-          fontSize: 13,
+          fontSize: 24,
           justifyContent: 'center',
         }}
         onClick={(e) => {

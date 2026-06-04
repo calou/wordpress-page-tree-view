@@ -80,7 +80,7 @@ export async function fetchPostTypes(): Promise<Record<string, ContentType>> {
  */
 export async function createPost(
   restBase: string,
-  data: { title: string; parent: number; menu_order: number; status?: string }
+  data: { title?: string; parent: number; menu_order: number; status?: string }
 ): Promise<WPPost> {
   return apiFetch<WPPost>({
     path: `/${restBase}`,
