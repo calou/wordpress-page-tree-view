@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchAllPosts, fetchChildren } from '../api/wp';
 import { htmlToText } from '../utils/treeUtils';
 import type { WPPost, TreeNode } from '../types';
+import apiFetch from '@wordpress/api-fetch';
 
 function postTitle(post: WPPost): string {
   return htmlToText(post.title.rendered) || `(${post.slug})`;
@@ -66,6 +67,7 @@ interface UseTreeDataResult {
   isLoading: boolean;
   progress: Progress | null;
   error: string | null;
+  homePageId: number | null;
   reload: () => void;
   loadChildren: (nodeId: string) => Promise<void>;
 }
@@ -76,6 +78,7 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [homePageId, setHomePageId] = useState();
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
@@ -106,6 +109,9 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
       .then((nodes) => { if (!cancelled) setTree(nodes); })
       .catch((err: Error) => { if (!cancelled) setError(err.message ?? 'Failed to load'); })
       .finally(() => { if (!cancelled) setIsLoading(false); });
+
+    apiFetch({ path: '/wp/v2/settings' }).then((settings: any) => setHomePageId(settings.page_on_front));
+
 
     return () => { cancelled = true; };
   }, [restBase, hierarchical, reloadKey]);
@@ -172,5 +178,5 @@ export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDat
     [restBase]
   );
 
-  return { tree, setTree, isLoading, progress, error, reload, loadChildren };
+  return { tree, setTree, isLoading, progress, error, reload, homePageId, loadChildren };
 }

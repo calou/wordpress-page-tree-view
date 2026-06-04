@@ -50,7 +50,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
   const { width = 800, height = 600 } = useResizeObserver({ ref: containerRef });
 
-  const { tree, setTree, isLoading, progress, error, reload, loadChildren } =
+  const { tree, setTree, isLoading, progress, error, homePageId, reload, loadChildren } =
     useTreeData(restBase, hierarchical);
   const onMove = useMove(restBase, tree, setTree);
 
@@ -70,7 +70,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
         openIdsRef.current = new Set(ids);
         return ids;
       }
-    } catch {}
+    } catch { }
     return new Set<string>();
   });
 
@@ -251,14 +251,14 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
       }
       try {
         sessionStorage.setItem(storageKey, JSON.stringify([...openIdsRef.current]));
-      } catch {}
+      } catch { }
     }
   };
 
   const isInSearch = searchResults !== null;
 
   return (
-    <TreeContext.Provider value={{ restBase, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
+    <TreeContext.Provider value={{ restBase, homePageId, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
           <input

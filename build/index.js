@@ -835,6 +835,7 @@ function NodeRenderer({
   const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
   const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
   const {
+    homePageId,
     actionNodeId,
     setActionNodeId,
     canEditAll
@@ -899,7 +900,7 @@ function NodeRenderer({
         gap: 6,
         minWidth: 0
       },
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
         style: {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -907,7 +908,11 @@ function NodeRenderer({
           fontSize: 15
         },
         title: node.data.name,
-        children: node.data.name
+        children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("small", {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
+            children: "\xA0-\xA0Home page"
+          })
+        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {})]
       }), isActive ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(NodeActions, {
         post: post,
         nodeId: node.id
@@ -1029,6 +1034,7 @@ function TreePanel({
     isLoading,
     progress,
     error,
+    homePageId,
     reload,
     loadChildren
   } = (0,_hooks_useTreeData__WEBPACK_IMPORTED_MODULE_4__.useTreeData)(restBase, hierarchical);
@@ -1245,6 +1251,7 @@ function TreePanel({
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_context_TreeContext__WEBPACK_IMPORTED_MODULE_6__.TreeContext.Provider, {
     value: {
       restBase,
+      homePageId,
       setTree,
       treeApiRef,
       actionNodeId,
@@ -1543,6 +1550,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
 /* harmony import */ var _utils_treeUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/treeUtils */ "./src/utils/treeUtils.ts");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/api-fetch */ "@wordpress/api-fetch");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3__);
+
 
 
 
@@ -1603,6 +1613,7 @@ function useTreeData(restBase, hierarchical) {
   const [progress, setProgress] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [error, setError] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [reloadKey, setReloadKey] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(0);
+  const [homePageId, setHomePageId] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)();
   const reload = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(() => setReloadKey(k => k + 1), []);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
     if (!restBase) return;
@@ -1632,6 +1643,9 @@ function useTreeData(restBase, hierarchical) {
     }).finally(() => {
       if (!cancelled) setIsLoading(false);
     });
+    _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
+      path: '/wp/v2/settings'
+    }).then(settings => setHomePageId(settings.page_on_front));
     return () => {
       cancelled = true;
     };
@@ -1692,6 +1706,7 @@ function useTreeData(restBase, hierarchical) {
     progress,
     error,
     reload,
+    homePageId,
     loadChildren
   };
 }

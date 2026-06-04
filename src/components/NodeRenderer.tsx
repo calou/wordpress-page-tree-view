@@ -337,11 +337,12 @@ function NodeActions({ post, nodeId }: NodeActionsProps) {
 
 export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
   const post = node.data.data;
+
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
   const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
 
-  const { actionNodeId, setActionNodeId, canEditAll } = useTreeContext();
+  const { homePageId, actionNodeId, setActionNodeId, canEditAll } = useTreeContext();
   const isActive = actionNodeId === node.id;
 
   const background = node.willReceiveDrop
@@ -419,6 +420,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           title={node.data.name}
         >
           {node.data.name}
+          {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Home page</i></small>) : (<span></span>)}
         </span>
 
         {/* Actions: full set when active, hover-only Edit/View otherwise */}
