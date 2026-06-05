@@ -1,71 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useContentTypes } from './hooks/useContentTypes';
+import React from 'react';
 import { TreePanel } from './components/TreePanel';
 
 export function App() {
-  const { types, isLoading, error } = useContentTypes();
-  const [activeTab, setActiveTab] = useState(0);
-
-  useEffect(() => {
-    setActiveTab(0);
-  }, [types.length]);
-
-  if (isLoading) {
-    return (
-      <div style={{ padding: 24, color: '#787c82' }}>
-        <span className="spinner is-active" style={{ float: 'none', margin: '0 8px 0 0' }} />
-        Loading content types…
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: 24 }}>
-        <div className="notice notice-error inline">
-          <p>Failed to load content types: {error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (types.length === 0) {
-    return (
-      <div style={{ padding: 24, color: '#787c82' }}>
-        No content types found with REST API support.
-      </div>
-    );
-  }
-
-  const current = types[activeTab] ?? types[0];
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Tab bar */}
-      <div
-        className="nav-tab-wrapper"
-        style={{ flexShrink: 0, paddingLeft: 0, marginBottom: 0, borderBottom: '1px solid #c3c4c7' }}
-      >
-        {types.map((tab, i) => (
-          <button
-            key={tab.rest_base}
-            className={`nav-tab${i === activeTab ? ' nav-tab-active' : ''}`}
-            onClick={() => setActiveTab(i)}
-            style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
-          >
-            {tab.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Tree panel */}
-      <div style={{ flex: 1, minHeight: 0, paddingTop: 8 }}>
-        <TreePanel
-          key={current.rest_base}
-          restBase={current.rest_base}
-          hierarchical={current.hierarchical}
-        />
-      </div>
-    </div>
+    <TreePanel key='pages'
+      restBase='pages'
+      hierarchical={true}
+    />
   );
 }

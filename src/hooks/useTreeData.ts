@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAllPosts, fetchChildren } from '../api/wp';
+import { fetchRootPages, fetchChildren } from '../api/wp';
 import { htmlToText } from '../utils/treeUtils';
 import type { WPPost, TreeNode } from '../types';
 import apiFetch from '@wordpress/api-fetch';
@@ -18,33 +18,6 @@ function toNode(post: WPPost): TreeNode {
   };
 }
 
-/** Flat array → tree (used for non-hierarchical post types only). */
-function buildTree(posts: WPPost[]): TreeNode[] {
-  const nodeMap = new Map<number, TreeNode>();
-
-  for (const post of posts) {
-    nodeMap.set(post.id, {
-      id: String(post.id),
-      name: postTitle(post),
-      children: undefined, // flat types have no hierarchy
-      childrenLoaded: true,
-      data: post,
-    });
-  }
-
-  const roots: TreeNode[] = [];
-  for (const post of posts) {
-    const node = nodeMap.get(post.id)!;
-    if (post.parent && nodeMap.has(post.parent)) {
-      const parent = nodeMap.get(post.parent)!;
-      (parent.children ??= []).push(node);
-    } else {
-      roots.push(node);
-    }
-  }
-  return roots;
-}
-
 function updateNode(
   tree: TreeNode[],
   id: string,
@@ -59,124 +32,100 @@ function updateNode(
   });
 }
 
-interface Progress { loaded: number; total: number }
 
 interface UseTreeDataResult {
   tree: TreeNode[];
   setTree: React.Dispatch<React.SetStateAction<TreeNode[]>>;
   isLoading: boolean;
-  progress: Progress | null;
   error: string | null;
   homePageId: number | null;
   reload: () => void;
   loadChildren: (nodeId: string) => Promise<void>;
 }
 
-export function useTreeData(restBase: string, hierarchical: boolean): UseTreeDataResult {
+export function useTreeData(): UseTreeDataResult {
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [homePageId, setHomePageId] = useState();
+  const [homePageId, setHomePageId] = useState(-1);
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
-    if (!restBase) return;
+    apiFetch({ path: '/wp/v2/settings' }).then((settings: any) => setHomePageId(settings.page_on_front));
 
     let cancelled = false;
     setIsLoading(true);
-    setProgress(null);
     setError(null);
 
-    const load = hierarchical
-      // Hierarchical: load only top-level pages (parent=0) up front
-      ? fetchAllPosts(
-        `wp/v2/${restBase}`,
-        undefined,
-        (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); },
-        0
-      ).then((posts) => posts.map(toNode))
-      // Flat: load everything and build the full tree at once
-      : fetchAllPosts(
-        `wp/v2/${restBase}`,
-        undefined,
-        (loaded, total) => { if (!cancelled) setProgress({ loaded, total }); }
-      ).then(buildTree);
-
-    load
+    fetchRootPages().then((posts) => posts.map(toNode))
       .then((nodes) => { if (!cancelled) setTree(nodes); })
       .catch((err: Error) => { if (!cancelled) setError(err.message ?? 'Failed to load'); })
       .finally(() => { if (!cancelled) setIsLoading(false); });
 
-    apiFetch({ path: '/wp/v2/settings' }).then((settings: any) => setHomePageId(settings.page_on_front));
 
 
     return () => { cancelled = true; };
-  }, [restBase, hierarchical, reloadKey]);
+  }, [reloadKey]);
 
-  const loadChildren = useCallback(
-    async (nodeId: string) => {
-      // Mark node as loading
+  const loadChildren = useCallback(async (nodeId: string) => {
+    // Mark node as loading
+    setTree((prev) =>
+      updateNode(prev, nodeId, (n) => ({ ...n, isLoadingChildren: true }))
+    );
+
+    try {
+      const posts = await fetchChildren(parseInt(nodeId, 10));
+
+      const childNodes = posts.length > 0 ? posts.map(toNode) : undefined;
+
       setTree((prev) =>
-        updateNode(prev, nodeId, (n) => ({ ...n, isLoadingChildren: true }))
+        updateNode(prev, nodeId, (n) => ({
+          ...n,
+          isLoadingChildren: false,
+          childrenLoaded: true,
+          // undefined = confirmed leaf; [] would keep toggle but stay empty
+          children: childNodes,
+        }))
       );
 
-      try {
-        const posts = await fetchChildren(
-          `wp/v2/${restBase}`,
-          parseInt(nodeId, 10)
-        );
+      // Preemptively load grandchildren concurrently, then apply all results in one setTree
+      if (childNodes) {
+        Promise.allSettled(
+          childNodes.map((child) =>
+            fetchChildren(parseInt(child.id, 10))
+              .then((posts) => ({ id: child.id, posts }))
+          )
+        ).then((results) => {
+          const loaded = results
+            .filter((r): r is PromiseFulfilledResult<{ id: string; posts: WPPost[] }> => r.status === 'fulfilled')
+            .map((r) => r.value);
 
-        const childNodes = posts.length > 0 ? posts.map(toNode) : undefined;
+          if (loaded.length === 0) return;
 
-        setTree((prev) =>
-          updateNode(prev, nodeId, (n) => ({
-            ...n,
-            isLoadingChildren: false,
-            childrenLoaded: true,
-            // undefined = confirmed leaf; [] would keep toggle but stay empty
-            children: childNodes,
-          }))
-        );
-
-        // Preemptively load grandchildren concurrently, then apply all results in one setTree
-        if (childNodes) {
-          Promise.allSettled(
-            childNodes.map((child) =>
-              fetchChildren(`wp/v2/${restBase}`, parseInt(child.id, 10))
-                .then((posts) => ({ id: child.id, posts }))
-            )
-          ).then((results) => {
-            const loaded = results
-              .filter((r): r is PromiseFulfilledResult<{ id: string; posts: WPPost[] }> => r.status === 'fulfilled')
-              .map((r) => r.value);
-
-            if (loaded.length === 0) return;
-
-            setTree((prev) => {
-              let next = prev;
-              for (const { id, posts } of loaded) {
-                next = updateNode(next, id, (n) => ({
-                  ...n,
-                  childrenLoaded: true,
-                  children: posts.length > 0 ? posts.map(toNode) : undefined,
-                }));
-              }
-              return next;
-            });
+          setTree((prev) => {
+            let next = prev;
+            for (const { id, posts } of loaded) {
+              next = updateNode(next, id, (n) => ({
+                ...n,
+                childrenLoaded: true,
+                children: posts.length > 0 ? posts.map(toNode) : undefined,
+              }));
+            }
+            return next;
           });
-        }
-      } catch {
-        // On error, revert loading state so user can retry by collapsing/expanding
-        setTree((prev) =>
-          updateNode(prev, nodeId, (n) => ({ ...n, isLoadingChildren: false }))
-        );
+        });
       }
-    },
-    [restBase]
+    } catch {
+      // On error, revert loading state so user can retry by collapsing/expanding
+      setTree((prev) =>
+        updateNode(prev, nodeId, (n) => ({ ...n, isLoadingChildren: false }))
+      );
+    }
+  },
+    []
   );
 
-  return { tree, setTree, isLoading, progress, error, reload, homePageId, loadChildren };
+  return { tree, setTree, isLoading, error, reload, homePageId, loadChildren };
 }

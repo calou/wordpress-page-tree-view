@@ -63,9 +63,10 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           display: 'inline-flex',
           width: 16,
           flexShrink: 0,
-          color: '#787c82',
+          color: '#AAA',
           fontSize: 24,
           justifyContent: 'center',
+          marginLeft: '8px',
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -89,7 +90,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: 15,
+            fontSize: 18,
           }}
           title={node.data.name}
         >

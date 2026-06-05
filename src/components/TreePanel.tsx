@@ -1,14 +1,14 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { CursorProps, MoveHandler, TreeApi } from 'react-arborist';
 import { Tree } from 'react-arborist';
-import type { TreeApi, MoveHandler, CursorProps } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
-import { NodeRenderer } from './NodeRenderer';
-import { useTreeData } from '../hooks/useTreeData';
-import { useMove } from '../hooks/useMove';
+import { fetchPostsByIds, searchPosts } from '../api/wp';
 import { TreeContext } from '../context/TreeContext';
-import { searchPosts, fetchPostsByIds } from '../api/wp';
-import { htmlToText } from '../utils/treeUtils';
+import { useMove } from '../hooks/useMove';
+import { useTreeData } from '../hooks/useTreeData';
 import type { TreeNode, WPPost } from '../types';
+import { htmlToText } from '../utils/treeUtils';
+import { NodeRenderer } from './NodeRenderer';
 
 function DropCursor({ top, left, indent }: CursorProps) {
   return (
@@ -40,19 +40,15 @@ function DropCursor({ top, left, indent }: CursorProps) {
   );
 }
 
-interface TreePanelProps {
-  restBase: string;
-  hierarchical: boolean;
-}
 
-export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
+export function TreePanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
   const { width = 800, height = 600 } = useResizeObserver({ ref: containerRef });
 
-  const { tree, setTree, isLoading, progress, error, homePageId, reload, loadChildren } =
-    useTreeData(restBase, hierarchical);
-  const onMove = useMove(restBase, tree, setTree);
+  const { tree, setTree, isLoading, error, homePageId, reload, loadChildren } =
+    useTreeData();
+  const onMove = useMove(tree, setTree);
 
   const [actionNodeId, setActionNodeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,7 +56,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const [isSearching, setIsSearching] = useState(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
 
-  const storageKey = `wptv_open_${restBase}`;
+  const storageKey = 'wptv_open_pages';
   const openIdsRef = useRef<Set<string>>(new Set());
   const [pendingRestoreIds, setPendingRestoreIds] = useState<Set<string>>(() => {
     try {
@@ -89,7 +85,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
 
     const timer = setTimeout(async () => {
       try {
-        const base = `wp/v2/${restBase}`;
+        const base = 'wp/v2/pages';
 
         // Step 1: get matching posts
         const matches = await searchPosts(base, searchTerm);
@@ -159,7 +155,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [searchTerm, restBase]);
+  }, [searchTerm]);
 
   // Restore open nodes from sessionStorage after tree data loads or new children arrive
   useEffect(() => {
@@ -187,32 +183,12 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   }, [tree, isLoading, pendingRestoreIds, searchResults]);
 
   if (isLoading) {
-    const label = progress
-      ? `Loading ${progress.loaded.toLocaleString()} / ${progress.total.toLocaleString()}…`
-      : 'Loading…';
-    const pct =
-      progress && progress.total > 0
-        ? Math.round((progress.loaded / progress.total) * 100)
-        : 0;
     return (
       <div style={{ padding: 24, color: '#787c82' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span className="spinner is-active" style={{ float: 'none', margin: 0 }} />
-          <span>{label}</span>
+          <span>Loading...</span>
         </div>
-        {progress && (
-          <div style={{ width: 240, height: 4, background: '#ddd', borderRadius: 2 }}>
-            <div
-              style={{
-                width: `${pct}%`,
-                height: '100%',
-                background: '#2271b1',
-                borderRadius: 2,
-                transition: 'width 0.2s',
-              }}
-            />
-          </div>
-        )}
       </div>
     );
   }
@@ -233,7 +209,6 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   }
 
   const handleMove: MoveHandler<TreeNode> = ({ dragIds, parentId, index }) => {
-    if (!hierarchical && parentId !== null) return;
     onMove({ dragIds, parentId, index });
   };
 
@@ -258,7 +233,7 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
   const isInSearch = searchResults !== null;
 
   return (
-    <TreeContext.Provider value={{ restBase, homePageId, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
+    <TreeContext.Provider value={{ homePageId, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
           <input
@@ -293,8 +268,8 @@ export function TreePanel({ restBase, hierarchical }: TreePanelProps) {
             onToggle={handleToggle}
             width={width}
             height={height}
-            rowHeight={38}
-            indent={20}
+            rowHeight={42}
+            indent={24}
             overscanCount={10}
             openByDefault={isInSearch}
             renderCursor={DropCursor}

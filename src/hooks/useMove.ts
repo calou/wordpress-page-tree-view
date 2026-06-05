@@ -72,7 +72,7 @@ function getSiblings(tree: TreeNode[], parentId: string | null): TreeNode[] {
   return findChildren(tree, parentId) ?? [];
 }
 
-export function useMove(restBase: string, tree: TreeNode[], setTree: SetTree) {
+export function useMove(tree: TreeNode[], setTree: SetTree) {
   // Always reflects the latest tree without being a useCallback dependency
   const treeRef = useRef(tree);
   treeRef.current = tree;
@@ -116,13 +116,13 @@ export function useMove(restBase: string, tree: TreeNode[], setTree: SetTree) {
         const oldIdx = oldSiblingIndexes.get(sibling.id);
         // oldIdx is undefined when the node comes from a different parent — always update.
         if (oldIdx === newIdx) return [];
-        return [movePost(`wp/v2/${restBase}`, parseInt(sibling.id, 10), parentNumericId, newIdx)];
+        return [movePost(parseInt(sibling.id, 10), parentNumericId, newIdx)];
       });
 
       Promise.all(apiCalls).catch(() => {
         setTree(snapshot);
       });
     },
-    [restBase, setTree]
+    [setTree]
   );
 }

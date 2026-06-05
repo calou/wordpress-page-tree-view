@@ -1,32 +1,24 @@
 import apiFetch from '@wordpress/api-fetch';
-import type { WPPost, ContentType } from '../types';
+import type { WPPost } from '../types';
 
 const PER_PAGE = 100;
 const STATUS = 'publish,draft,private,pending,future,trash';
-
+const FIELDS = 'id,parent,menu_order,title,status,link,slug';
+const BASE_QUERY = `per_page=${PER_PAGE}&_fields=${FIELDS}&orderby=menu_order&order=asc&status=${STATUS}&parent=0`;
 /**
  * Fetch all posts of a given type, paginating in parallel after the first page.
  */
-export async function fetchAllPosts(
-  restBase: string,
-  fields = 'id,parent,menu_order,title,status,type,link,slug',
-  onProgress?: (loaded: number, total: number) => void,
-  parent?: number
-): Promise<WPPost[]> {
-  const baseQuery = `per_page=${PER_PAGE}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}${parent !== undefined ? `&parent=${parent}` : ''}`;
+export async function fetchRootPages(): Promise<WPPost[]> {
 
   const response = await apiFetch<WPPost[], false>({
-    path: `/${restBase}?${baseQuery}&page=1`,
+    path: `/wp/v2/pages?${BASE_QUERY}&page=1`,
     parse: false,
   });
 
   // apiFetch with parse:false returns a Response object
   const res = response as unknown as Response;
   const totalPages = parseInt(res.headers.get('X-WP-TotalPages') ?? '1', 10);
-  const total = parseInt(res.headers.get('X-WP-Total') ?? '0', 10);
   const firstPageData: WPPost[] = await res.json();
-
-  onProgress?.(firstPageData.length, total);
 
   if (totalPages <= 1) {
     return firstPageData;
@@ -37,14 +29,11 @@ export async function fetchAllPosts(
     (_, i) => i + 2
   );
 
-  let loaded = firstPageData.length;
   const remainingResults = await Promise.all(
     remainingPages.map(async (page) => {
       const data = await apiFetch<WPPost[]>({
-        path: `/${restBase}?${baseQuery}&page=${page}`,
+        path: `/wp/v2/pages?${BASE_QUERY}&page=${page}`,
       });
-      loaded += data.length;
-      onProgress?.(loaded, total);
       return data;
     })
   );
@@ -56,22 +45,9 @@ export async function fetchAllPosts(
  * Fetch immediate children of a single parent node.
  * Note: capped at PER_PAGE (100). Nodes with more than 100 children will be silently truncated.
  */
-export async function fetchChildren(
-  restBase: string,
-  parentId: number,
-  fields = 'id,parent,menu_order,title,status,type,link,slug'
-): Promise<WPPost[]> {
+export async function fetchChildren(parentId: number): Promise<WPPost[]> {
   return apiFetch<WPPost[]>({
-    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}`,
-  });
-}
-
-/**
- * Fetch all registered post types from the REST API.
- */
-export async function fetchPostTypes(): Promise<Record<string, ContentType>> {
-  return apiFetch<Record<string, ContentType>>({
-    path: '/wp/v2/types',
+    path: `/wp/v2/pages?per_page=${PER_PAGE}&parent=${parentId}&_fields=${FIELDS}&orderby=menu_order&order=asc&status=${STATUS}`,
   });
 }
 
@@ -79,11 +55,10 @@ export async function fetchPostTypes(): Promise<Record<string, ContentType>> {
  * Create a new post (page, CPT, etc.).
  */
 export async function createPost(
-  restBase: string,
   data: { title?: string; parent: number; menu_order: number; status?: string }
 ): Promise<WPPost> {
   return apiFetch<WPPost>({
-    path: `/${restBase}`,
+    path: `/wp/v2/pages`,
     method: 'POST',
     data: { status: 'draft', ...data },
   });
@@ -201,13 +176,12 @@ export function exportSubtree(id: number): void {
  * Move a post by updating its parent and menu_order.
  */
 export async function movePost(
-  restBase: string,
   id: number,
   parentId: number,
   menuOrder: number
 ): Promise<WPPost> {
   return apiFetch<WPPost>({
-    path: `/${restBase}/${id}`,
+    path: `/wp/v2/pages/${id}`,
     method: 'POST',
     data: {
       parent: parentId,

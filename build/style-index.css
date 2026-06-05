@@ -40,7 +40,7 @@
 }
 
 .wptv-node:hover {
-  background: #f0f6fc !important;
+  background: #ccc !important;
 }
 
 /* Quick action links: hide by default, show on row hover */

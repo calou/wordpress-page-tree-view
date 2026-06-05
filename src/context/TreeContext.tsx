@@ -4,7 +4,6 @@ import type { TreeApi } from 'react-arborist';
 import type { TreeNode } from '../types';
 
 export interface TreeContextValue {
-  restBase: string;
   homePageId: number | null;
   setTree: React.Dispatch<React.SetStateAction<TreeNode[]>>;
   treeApiRef: RefObject<TreeApi<TreeNode> | null>;

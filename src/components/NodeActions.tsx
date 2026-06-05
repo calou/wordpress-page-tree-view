@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { bulkUpdateStatus, createPost, duplicatePost, duplicateSubtree, exportSubtree, restorePost, trashPost } from '../api/wp';
+import { bulkUpdateStatus, createPost, duplicateSubtree, exportSubtree } from '../api/wp';
 import { useTreeContext } from '../context/TreeContext';
-import type { TreeNode, WPPost, NodeActionsProps } from '../types';
+import type { NodeActionsProps, TreeNode, WPPost } from '../types';
 import {
   addChildToNode,
   addSiblingAfter,
@@ -10,7 +10,7 @@ import {
   updateSubtreeInTree,
 } from '../utils/treeUtils';
 
-function toCreatedNode(post: WPPost): TreeNode {
+const toCreatedNode = (post: WPPost): TreeNode => {
   return {
     id: String(post.id),
     name: htmlToText(post.title.rendered) || `(${post.slug})`,
@@ -18,9 +18,9 @@ function toCreatedNode(post: WPPost): TreeNode {
     childrenLoaded: true,
     data: post,
   };
-}
+};
 
-function buildSubtreeNodes(posts: import('../types').WPPost[], parentId: number): TreeNode[] {
+const buildSubtreeNodes = (posts: import('../types').WPPost[], parentId: number): TreeNode[] => {
   return posts
     .filter((p) => p.parent === parentId)
     .sort((a, b) => a.menu_order - b.menu_order)
@@ -31,7 +31,7 @@ function buildSubtreeNodes(posts: import('../types').WPPost[], parentId: number)
       childrenLoaded: true,
       data: p,
     }));
-}
+};
 
 const stop = (e: React.MouseEvent) => {
   e.stopPropagation();
@@ -39,8 +39,9 @@ const stop = (e: React.MouseEvent) => {
 };
 
 
+
 export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
-  const { restBase, setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
+  const { setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = useState(false);
 
@@ -56,10 +57,15 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
     }
   };
 
+  const unsetActionId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActionNodeId(null);
+  };
+
   const handleAdd = (e: React.MouseEvent, parent: number, menu_order: number, callback: (prev: TreeNode[], nodeId: string, newNode: TreeNode) => TreeNode[]): void => {
     stop(e);
     run(async () => {
-      const newPost = await createPost(`wp/v2/${restBase}`, { parent, menu_order, });
+      const newPost = await createPost({ parent, menu_order, });
       setTree((prev) => callback(prev, nodeId, toCreatedNode(newPost)));
       treeApiRef.current?.open(nodeId);
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
@@ -127,7 +133,7 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
     setActionNodeId(null);
   };
 
-  const sep = <span style={{ color: '#ddd', userSelect: 'none' }}>|</span>;
+  const sep = <span style={{ color: '#ccc', userSelect: 'none' }}>|</span>;
 
   const base: React.CSSProperties = {
     fontSize: 15,
@@ -158,14 +164,16 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
   return (
     <span className='wptv-node-actions'
       style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
-      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+      onMouseDown={stop}
       onClick={(e) => e.stopPropagation()}
     >
+      {sep}
       <a
         href={`${adminUrl}post.php?post=${post.id}&action=edit`}
+        target="_blank"
         style={base}
         onMouseDown={stop}
-        onClick={(e) => { e.stopPropagation(); setActionNodeId(null); }}
+        onClick={unsetActionId}
       >
         Edit
       </a>
@@ -178,7 +186,7 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
             rel="noreferrer"
             style={base}
             onMouseDown={stop}
-            onClick={(e) => { e.stopPropagation(); setActionNodeId(null); }}
+            onClick={unsetActionId}
           >
             View
           </a>

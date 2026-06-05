@@ -129,98 +129,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _hooks_useContentTypes__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./hooks/useContentTypes */ "./src/hooks/useContentTypes.ts");
-/* harmony import */ var _components_TreePanel__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/TreePanel */ "./src/components/TreePanel.tsx");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
-
+/* harmony import */ var _components_TreePanel__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/TreePanel */ "./src/components/TreePanel.tsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__);
 
 
 
 function App() {
-  const {
-    types,
-    isLoading,
-    error
-  } = (0,_hooks_useContentTypes__WEBPACK_IMPORTED_MODULE_1__.useContentTypes)();
-  const [activeTab, setActiveTab] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(0);
-  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
-    setActiveTab(0);
-  }, [types.length]);
-  if (isLoading) {
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
-      style: {
-        padding: 24,
-        color: '#787c82'
-      },
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
-        className: "spinner is-active",
-        style: {
-          float: 'none',
-          margin: '0 8px 0 0'
-        }
-      }), "Loading content types\u2026"]
-    });
-  }
-  if (error) {
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-      style: {
-        padding: 24
-      },
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-        className: "notice notice-error inline",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("p", {
-          children: ["Failed to load content types: ", error]
-        })
-      })
-    });
-  }
-  if (types.length === 0) {
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-      style: {
-        padding: 24,
-        color: '#787c82'
-      },
-      children: "No content types found with REST API support."
-    });
-  }
-  const current = types[activeTab] ?? types[0];
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%'
-    },
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-      className: "nav-tab-wrapper",
-      style: {
-        flexShrink: 0,
-        paddingLeft: 0,
-        marginBottom: 0,
-        borderBottom: '1px solid #c3c4c7'
-      },
-      children: types.map((tab, i) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
-        className: `nav-tab${i === activeTab ? ' nav-tab-active' : ''}`,
-        onClick: () => setActiveTab(i),
-        style: {
-          cursor: 'pointer',
-          border: 'none',
-          background: 'transparent'
-        },
-        children: tab.name
-      }, tab.rest_base))
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("div", {
-      style: {
-        flex: 1,
-        minHeight: 0,
-        paddingTop: 8
-      },
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_components_TreePanel__WEBPACK_IMPORTED_MODULE_2__.TreePanel, {
-        restBase: current.rest_base,
-        hierarchical: current.hierarchical
-      }, current.rest_base)
-    })]
-  });
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_components_TreePanel__WEBPACK_IMPORTED_MODULE_1__.TreePanel, {
+    restBase: "pages",
+    hierarchical: true
+  }, 'pages');
 }
 
 /***/ },
@@ -238,10 +157,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   duplicatePost: () => (/* binding */ duplicatePost),
 /* harmony export */   duplicateSubtree: () => (/* binding */ duplicateSubtree),
 /* harmony export */   exportSubtree: () => (/* binding */ exportSubtree),
-/* harmony export */   fetchAllPosts: () => (/* binding */ fetchAllPosts),
 /* harmony export */   fetchChildren: () => (/* binding */ fetchChildren),
-/* harmony export */   fetchPostTypes: () => (/* binding */ fetchPostTypes),
 /* harmony export */   fetchPostsByIds: () => (/* binding */ fetchPostsByIds),
+/* harmony export */   fetchRootPages: () => (/* binding */ fetchRootPages),
 /* harmony export */   movePost: () => (/* binding */ movePost),
 /* harmony export */   restorePost: () => (/* binding */ restorePost),
 /* harmony export */   searchPosts: () => (/* binding */ searchPosts),
@@ -252,36 +170,31 @@ __webpack_require__.r(__webpack_exports__);
 
 const PER_PAGE = 100;
 const STATUS = 'publish,draft,private,pending,future,trash';
-
+const FIELDS = 'id,parent,menu_order,title,status,link,slug';
+const BASE_QUERY = `per_page=${PER_PAGE}&_fields=${FIELDS}&orderby=menu_order&order=asc&status=${STATUS}&parent=0`;
 /**
  * Fetch all posts of a given type, paginating in parallel after the first page.
  */
-async function fetchAllPosts(restBase, fields = 'id,parent,menu_order,title,status,type,link,slug', onProgress, parent) {
-  const baseQuery = `per_page=${PER_PAGE}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}${parent !== undefined ? `&parent=${parent}` : ''}`;
+async function fetchRootPages() {
   const response = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-    path: `/${restBase}?${baseQuery}&page=1`,
+    path: `/wp/v2/pages?${BASE_QUERY}&page=1`,
     parse: false
   });
 
   // apiFetch with parse:false returns a Response object
   const res = response;
   const totalPages = parseInt(res.headers.get('X-WP-TotalPages') ?? '1', 10);
-  const total = parseInt(res.headers.get('X-WP-Total') ?? '0', 10);
   const firstPageData = await res.json();
-  onProgress?.(firstPageData.length, total);
   if (totalPages <= 1) {
     return firstPageData;
   }
   const remainingPages = Array.from({
     length: totalPages - 1
   }, (_, i) => i + 2);
-  let loaded = firstPageData.length;
   const remainingResults = await Promise.all(remainingPages.map(async page => {
     const data = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-      path: `/${restBase}?${baseQuery}&page=${page}`
+      path: `/wp/v2/pages?${BASE_QUERY}&page=${page}`
     });
-    loaded += data.length;
-    onProgress?.(loaded, total);
     return data;
   }));
   return [firstPageData, ...remainingResults].flat();
@@ -291,27 +204,18 @@ async function fetchAllPosts(restBase, fields = 'id,parent,menu_order,title,stat
  * Fetch immediate children of a single parent node.
  * Note: capped at PER_PAGE (100). Nodes with more than 100 children will be silently truncated.
  */
-async function fetchChildren(restBase, parentId, fields = 'id,parent,menu_order,title,status,type,link,slug') {
+async function fetchChildren(parentId) {
   return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-    path: `/${restBase}?per_page=${PER_PAGE}&parent=${parentId}&_fields=${fields}&orderby=menu_order&order=asc&status=${STATUS}`
-  });
-}
-
-/**
- * Fetch all registered post types from the REST API.
- */
-async function fetchPostTypes() {
-  return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-    path: '/wp/v2/types'
+    path: `/wp/v2/pages?per_page=${PER_PAGE}&parent=${parentId}&_fields=${FIELDS}&orderby=menu_order&order=asc&status=${STATUS}`
   });
 }
 
 /**
  * Create a new post (page, CPT, etc.).
  */
-async function createPost(restBase, data) {
+async function createPost(data) {
   return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-    path: `/${restBase}`,
+    path: `/wp/v2/pages`,
     method: 'POST',
     data: {
       status: 'draft',
@@ -425,9 +329,9 @@ function exportSubtree(id) {
 /**
  * Move a post by updating its parent and menu_order.
  */
-async function movePost(restBase, id, parentId, menuOrder) {
+async function movePost(id, parentId, menuOrder) {
   return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
-    path: `/${restBase}/${id}`,
+    path: `/wp/v2/pages/${id}`,
     method: 'POST',
     data: {
       parent: parentId,
@@ -460,7 +364,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-function toCreatedNode(post) {
+const toCreatedNode = post => {
   return {
     id: String(post.id),
     name: (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.htmlToText)(post.title.rendered) || `(${post.slug})`,
@@ -468,8 +372,8 @@ function toCreatedNode(post) {
     childrenLoaded: true,
     data: post
   };
-}
-function buildSubtreeNodes(posts, parentId) {
+};
+const buildSubtreeNodes = (posts, parentId) => {
   return posts.filter(p => p.parent === parentId).sort((a, b) => a.menu_order - b.menu_order).map(p => ({
     id: String(p.id),
     name: (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.htmlToText)(p.title.rendered) || `(${p.slug})`,
@@ -477,7 +381,7 @@ function buildSubtreeNodes(posts, parentId) {
     childrenLoaded: true,
     data: p
   }));
-}
+};
 const stop = e => {
   e.stopPropagation();
   e.preventDefault();
@@ -488,7 +392,6 @@ function NodeActions({
   active
 }) {
   const {
-    restBase,
     setTree,
     treeApiRef,
     setActionNodeId,
@@ -507,10 +410,14 @@ function NodeActions({
       setBusy(false);
     }
   };
+  const unsetActionId = e => {
+    e.stopPropagation();
+    setActionNodeId(null);
+  };
   const handleAdd = (e, parent, menu_order, callback) => {
     stop(e);
     run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)({
         parent,
         menu_order
       });
@@ -580,7 +487,7 @@ function NodeActions({
   };
   const sep = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
     style: {
-      color: '#ddd',
+      color: '#ccc',
       userSelect: 'none'
     },
     children: "|"
@@ -629,19 +536,14 @@ function NodeActions({
       gap: 3,
       flexShrink: 0
     },
-    onMouseDown: e => {
-      e.stopPropagation();
-      e.preventDefault();
-    },
+    onMouseDown: stop,
     onClick: e => e.stopPropagation(),
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
+    children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
       href: `${adminUrl}post.php?post=${post.id}&action=edit`,
+      target: "_blank",
       style: base,
       onMouseDown: stop,
-      onClick: e => {
-        e.stopPropagation();
-        setActionNodeId(null);
-      },
+      onClick: unsetActionId,
       children: "Edit"
     }), post.status === 'publish' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
       children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
@@ -650,10 +552,7 @@ function NodeActions({
         rel: "noreferrer",
         style: base,
         onMouseDown: stop,
-        onClick: e => {
-          e.stopPropagation();
-          setActionNodeId(null);
-        },
+        onClick: unsetActionId,
         children: "View"
       })]
     }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
@@ -787,9 +686,10 @@ function NodeRenderer({
         display: 'inline-flex',
         width: 16,
         flexShrink: 0,
-        color: '#787c82',
+        color: '#AAA',
         fontSize: 24,
-        justifyContent: 'center'
+        justifyContent: 'center',
+        marginLeft: '8px'
       },
       onClick: e => {
         e.stopPropagation();
@@ -823,7 +723,7 @@ function NodeRenderer({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          fontSize: 15
+          fontSize: 18
         },
         title: node.data.name,
         children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("small", {
@@ -856,12 +756,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react_arborist__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-arborist */ "./node_modules/react-arborist/dist/module/components/tree.js");
 /* harmony import */ var use_resize_observer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! use-resize-observer */ "./node_modules/use-resize-observer/dist/bundle.esm.js");
-/* harmony import */ var _NodeRenderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./NodeRenderer */ "./src/components/NodeRenderer.tsx");
-/* harmony import */ var _hooks_useTreeData__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../hooks/useTreeData */ "./src/hooks/useTreeData.ts");
+/* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
+/* harmony import */ var _context_TreeContext__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../context/TreeContext */ "./src/context/TreeContext.tsx");
 /* harmony import */ var _hooks_useMove__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../hooks/useMove */ "./src/hooks/useMove.ts");
-/* harmony import */ var _context_TreeContext__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../context/TreeContext */ "./src/context/TreeContext.tsx");
-/* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
-/* harmony import */ var _utils_treeUtils__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../utils/treeUtils */ "./src/utils/treeUtils.ts");
+/* harmony import */ var _hooks_useTreeData__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../hooks/useTreeData */ "./src/hooks/useTreeData.ts");
+/* harmony import */ var _utils_treeUtils__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../utils/treeUtils */ "./src/utils/treeUtils.ts");
+/* harmony import */ var _NodeRenderer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./NodeRenderer */ "./src/components/NodeRenderer.tsx");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__);
 
@@ -904,10 +804,7 @@ function DropCursor({
     })
   });
 }
-function TreePanel({
-  restBase,
-  hierarchical
-}) {
+function TreePanel() {
   const containerRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   const treeApiRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   const {
@@ -920,19 +817,18 @@ function TreePanel({
     tree,
     setTree,
     isLoading,
-    progress,
     error,
     homePageId,
     reload,
     loadChildren
-  } = (0,_hooks_useTreeData__WEBPACK_IMPORTED_MODULE_4__.useTreeData)(restBase, hierarchical);
-  const onMove = (0,_hooks_useMove__WEBPACK_IMPORTED_MODULE_5__.useMove)(restBase, tree, setTree);
+  } = (0,_hooks_useTreeData__WEBPACK_IMPORTED_MODULE_6__.useTreeData)();
+  const onMove = (0,_hooks_useMove__WEBPACK_IMPORTED_MODULE_5__.useMove)(tree, setTree);
   const [actionNodeId, setActionNodeId] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [searchTerm, setSearchTerm] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('');
   const [searchResults, setSearchResults] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [isSearching, setIsSearching] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
-  const storageKey = `wptv_open_${restBase}`;
+  const storageKey = 'wptv_open_pages';
   const openIdsRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(new Set());
   const [pendingRestoreIds, setPendingRestoreIds] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(() => {
     try {
@@ -958,10 +854,10 @@ function TreePanel({
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
-        const base = `wp/v2/${restBase}`;
+        const base = 'wp/v2/pages';
 
         // Step 1: get matching posts
-        const matches = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_7__.searchPosts)(base, searchTerm);
+        const matches = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_3__.searchPosts)(base, searchTerm);
         if (cancelled) return;
         if (matches.length === 0) {
           setSearchResults([]);
@@ -973,7 +869,7 @@ function TreePanel({
         for (const p of matches) collected.set(p.id, p);
         let toFetch = new Set(matches.filter(p => p.parent && !collected.has(p.parent)).map(p => p.parent));
         while (toFetch.size > 0) {
-          const ancestors = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_7__.fetchPostsByIds)(base, [...toFetch]);
+          const ancestors = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_3__.fetchPostsByIds)(base, [...toFetch]);
           if (cancelled) return;
           toFetch = new Set();
           for (const p of ancestors) {
@@ -987,7 +883,7 @@ function TreePanel({
         for (const post of collected.values()) {
           nodeMap.set(post.id, {
             id: String(post.id),
-            name: (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_8__.htmlToText)(post.title.rendered) || `(${post.slug})`,
+            name: (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_7__.htmlToText)(post.title.rendered) || `(${post.slug})`,
             children: [],
             childrenLoaded: true,
             data: post
@@ -1023,7 +919,7 @@ function TreePanel({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [searchTerm, restBase]);
+  }, [searchTerm]);
 
   // Restore open nodes from sessionStorage after tree data loads or new children arrive
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
@@ -1047,14 +943,12 @@ function TreePanel({
     });
   }, [tree, isLoading, pendingRestoreIds, searchResults]);
   if (isLoading) {
-    const label = progress ? `Loading ${progress.loaded.toLocaleString()} / ${progress.total.toLocaleString()}…` : 'Loading…';
-    const pct = progress && progress.total > 0 ? Math.round(progress.loaded / progress.total * 100) : 0;
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
       style: {
         padding: 24,
         color: '#787c82'
       },
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
         style: {
           display: 'flex',
           alignItems: 'center',
@@ -1068,25 +962,9 @@ function TreePanel({
             margin: 0
           }
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("span", {
-          children: label
+          children: "Loading..."
         })]
-      }), progress && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
-        style: {
-          width: 240,
-          height: 4,
-          background: '#ddd',
-          borderRadius: 2
-        },
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
-          style: {
-            width: `${pct}%`,
-            height: '100%',
-            background: '#2271b1',
-            borderRadius: 2,
-            transition: 'width 0.2s'
-          }
-        })
-      })]
+      })
     });
   }
   if (error) {
@@ -1111,7 +989,6 @@ function TreePanel({
     parentId,
     index
   }) => {
-    if (!hierarchical && parentId !== null) return;
     onMove({
       dragIds,
       parentId,
@@ -1136,9 +1013,8 @@ function TreePanel({
     }
   };
   const isInSearch = searchResults !== null;
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_context_TreeContext__WEBPACK_IMPORTED_MODULE_6__.TreeContext.Provider, {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_context_TreeContext__WEBPACK_IMPORTED_MODULE_4__.TreeContext.Provider, {
     value: {
-      restBase,
       homePageId,
       setTree,
       treeApiRef,
@@ -1210,12 +1086,12 @@ function TreePanel({
           onToggle: handleToggle,
           width: width,
           height: height,
-          rowHeight: 38,
-          indent: 20,
+          rowHeight: 42,
+          indent: 24,
           overscanCount: 10,
           openByDefault: isInSearch,
           renderCursor: DropCursor,
-          children: _NodeRenderer__WEBPACK_IMPORTED_MODULE_3__.NodeRenderer
+          children: _NodeRenderer__WEBPACK_IMPORTED_MODULE_8__.NodeRenderer
         })
       })]
     })
@@ -1245,51 +1121,6 @@ function useTreeContext() {
   return ctx;
 }
 
-
-/***/ },
-
-/***/ "./src/hooks/useContentTypes.ts"
-/*!**************************************!*\
-  !*** ./src/hooks/useContentTypes.ts ***!
-  \**************************************/
-(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   useContentTypes: () => (/* binding */ useContentTypes)
-/* harmony export */ });
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
-
-
-// Types to exclude from the tree view
-const EXCLUDED_TYPES = new Set(['attachment', 'nav_menu_item', 'post', 'wp_block', 'wp_global_styles', 'wp_template', 'wp_template_part', 'wp_navigation', 'wp_font_family', 'wp_font_face']);
-function useContentTypes() {
-  const [types, setTypes] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
-  const [isLoading, setIsLoading] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true);
-  const [error, setError] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
-  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
-    let cancelled = false;
-    (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchPostTypes)().then(all => {
-      if (cancelled) return;
-      setTypes(Object.values(all).filter(t => !EXCLUDED_TYPES.has(t.slug) && t.rest_base && t.hierarchical));
-    }).catch(err => {
-      if (cancelled) return;
-      setError(err.message ?? 'Failed to load content types');
-    }).finally(() => {
-      if (!cancelled) setIsLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return {
-    types,
-    isLoading,
-    error
-  };
-}
 
 /***/ },
 
@@ -1368,7 +1199,7 @@ function getSiblings(tree, parentId) {
   if (parentId === null) return tree;
   return findChildren(tree, parentId) ?? [];
 }
-function useMove(restBase, tree, setTree) {
+function useMove(tree, setTree) {
   // Always reflects the latest tree without being a useCallback dependency
   const treeRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(tree);
   treeRef.current = tree;
@@ -1414,12 +1245,12 @@ function useMove(restBase, tree, setTree) {
       const oldIdx = oldSiblingIndexes.get(sibling.id);
       // oldIdx is undefined when the node comes from a different parent — always update.
       if (oldIdx === newIdx) return [];
-      return [(0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.movePost)(`wp/v2/${restBase}`, parseInt(sibling.id, 10), parentNumericId, newIdx)];
+      return [(0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.movePost)(parseInt(sibling.id, 10), parentNumericId, newIdx)];
     });
     Promise.all(apiCalls).catch(() => {
       setTree(snapshot);
     });
-  }, [restBase, setTree]);
+  }, [setTree]);
 }
 
 /***/ },
@@ -1457,32 +1288,6 @@ function toNode(post) {
     data: post
   };
 }
-
-/** Flat array → tree (used for non-hierarchical post types only). */
-function buildTree(posts) {
-  const nodeMap = new Map();
-  for (const post of posts) {
-    nodeMap.set(post.id, {
-      id: String(post.id),
-      name: postTitle(post),
-      children: undefined,
-      // flat types have no hierarchy
-      childrenLoaded: true,
-      data: post
-    });
-  }
-  const roots = [];
-  for (const post of posts) {
-    const node = nodeMap.get(post.id);
-    if (post.parent && nodeMap.has(post.parent)) {
-      const parent = nodeMap.get(post.parent);
-      (parent.children ??= []).push(node);
-    } else {
-      roots.push(node);
-    }
-  }
-  return roots;
-}
 function updateNode(tree, id, updater) {
   return tree.map(node => {
     if (node.id === id) return updater(node);
@@ -1495,49 +1300,31 @@ function updateNode(tree, id, updater) {
     return node;
   });
 }
-function useTreeData(restBase, hierarchical) {
+function useTreeData() {
   const [tree, setTree] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]);
   const [isLoading, setIsLoading] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(true);
-  const [progress, setProgress] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [error, setError] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [reloadKey, setReloadKey] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(0);
-  const [homePageId, setHomePageId] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)();
+  const [homePageId, setHomePageId] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(-1);
   const reload = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(() => setReloadKey(k => k + 1), []);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
-    if (!restBase) return;
+    _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
+      path: '/wp/v2/settings'
+    }).then(settings => setHomePageId(settings.page_on_front));
     let cancelled = false;
     setIsLoading(true);
-    setProgress(null);
     setError(null);
-    const load = hierarchical
-    // Hierarchical: load only top-level pages (parent=0) up front
-    ? (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchAllPosts)(`wp/v2/${restBase}`, undefined, (loaded, total) => {
-      if (!cancelled) setProgress({
-        loaded,
-        total
-      });
-    }, 0).then(posts => posts.map(toNode))
-    // Flat: load everything and build the full tree at once
-    : (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchAllPosts)(`wp/v2/${restBase}`, undefined, (loaded, total) => {
-      if (!cancelled) setProgress({
-        loaded,
-        total
-      });
-    }).then(buildTree);
-    load.then(nodes => {
+    (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchRootPages)().then(posts => posts.map(toNode)).then(nodes => {
       if (!cancelled) setTree(nodes);
     }).catch(err => {
       if (!cancelled) setError(err.message ?? 'Failed to load');
     }).finally(() => {
       if (!cancelled) setIsLoading(false);
     });
-    _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
-      path: '/wp/v2/settings'
-    }).then(settings => setHomePageId(settings.page_on_front));
     return () => {
       cancelled = true;
     };
-  }, [restBase, hierarchical, reloadKey]);
+  }, [reloadKey]);
   const loadChildren = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(async nodeId => {
     // Mark node as loading
     setTree(prev => updateNode(prev, nodeId, n => ({
@@ -1545,7 +1332,7 @@ function useTreeData(restBase, hierarchical) {
       isLoadingChildren: true
     })));
     try {
-      const posts = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchChildren)(`wp/v2/${restBase}`, parseInt(nodeId, 10));
+      const posts = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchChildren)(parseInt(nodeId, 10));
       const childNodes = posts.length > 0 ? posts.map(toNode) : undefined;
       setTree(prev => updateNode(prev, nodeId, n => ({
         ...n,
@@ -1557,7 +1344,7 @@ function useTreeData(restBase, hierarchical) {
 
       // Preemptively load grandchildren concurrently, then apply all results in one setTree
       if (childNodes) {
-        Promise.allSettled(childNodes.map(child => (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchChildren)(`wp/v2/${restBase}`, parseInt(child.id, 10)).then(posts => ({
+        Promise.allSettled(childNodes.map(child => (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.fetchChildren)(parseInt(child.id, 10)).then(posts => ({
           id: child.id,
           posts
         })))).then(results => {
@@ -1586,12 +1373,11 @@ function useTreeData(restBase, hierarchical) {
         isLoadingChildren: false
       })));
     }
-  }, [restBase]);
+  }, []);
   return {
     tree,
     setTree,
     isLoading,
-    progress,
     error,
     reload,
     homePageId,
