@@ -38,7 +38,7 @@ const stop = (e: React.MouseEvent) => {
   e.preventDefault();
 };
 
-export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps) {
+export function NodeActions({ post, nodeId, active, editable, isHomePage }: NodeActionsProps) {
   const { setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = useState(false);
@@ -191,23 +191,27 @@ export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps
 
           {!!active && (
             <>
-              {sep}
-              < button style={base} onMouseDown={stop} onClick={handleAddInside}>New page</button>
-              (
-              <button style={base} onMouseDown={stop} onClick={handleAddBefore}>before</button>
-              ,
-              <button style={base} onMouseDown={stop} onClick={handleAddAfter}>after</button>
-              )
-              {sep}
-              <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate</button>
-              {sep}
-              <button
-                style={{ ...base, color: '#d63638' }}
-                onMouseDown={stop}
-                onClick={handleTrashAll}
-              >
-                Trash
-              </button>
+              {!isHomePage && (
+                <>
+                  {sep}
+                  < button style={base} onMouseDown={stop} onClick={handleAddInside}>New page</button>
+                  (
+                  <button style={base} onMouseDown={stop} onClick={handleAddBefore}>before</button>
+                  ,
+                  <button style={base} onMouseDown={stop} onClick={handleAddAfter}>after</button>
+                  )
+                  {sep}
+                  <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate</button>
+                  {sep}
+                  <button
+                    style={{ ...base, color: '#d63638' }}
+                    onMouseDown={stop}
+                    onClick={handleTrashAll}
+                  >
+                    Trash
+                  </button>
+                </>
+              )}
               {
                 (post.status === 'draft' || post.status === 'publish') && (
                   <>
@@ -219,7 +223,8 @@ export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps
             </>
           )}
         </>
-      )}
+      )
+      }
     </span >
   );
 }

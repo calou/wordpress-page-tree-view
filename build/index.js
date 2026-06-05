@@ -387,7 +387,8 @@ function NodeActions({
   post,
   nodeId,
   active,
-  editable
+  editable,
+  isHomePage
 }) {
   const {
     setTree,
@@ -553,34 +554,36 @@ function NodeActions({
         onClick: onClick,
         children: "Edit"
       }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
-        children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-          style: base,
-          onMouseDown: stop,
-          onClick: handleAddInside,
-          children: "New page"
-        }), "(", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-          style: base,
-          onMouseDown: stop,
-          onClick: handleAddBefore,
-          children: "before"
-        }), ",", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-          style: base,
-          onMouseDown: stop,
-          onClick: handleAddAfter,
-          children: "after"
-        }), ")", sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-          style: base,
-          onMouseDown: stop,
-          onClick: handleDuplicateAll,
-          children: "Duplicate"
-        }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-          style: {
-            ...base,
-            color: '#d63638'
-          },
-          onMouseDown: stop,
-          onClick: handleTrashAll,
-          children: "Trash"
+        children: [!isHomePage && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+          children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: base,
+            onMouseDown: stop,
+            onClick: handleAddInside,
+            children: "New page"
+          }), "(", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: base,
+            onMouseDown: stop,
+            onClick: handleAddBefore,
+            children: "before"
+          }), ",", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: base,
+            onMouseDown: stop,
+            onClick: handleAddAfter,
+            children: "after"
+          }), ")", sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: base,
+            onMouseDown: stop,
+            onClick: handleDuplicateAll,
+            children: "Duplicate"
+          }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: {
+              ...base,
+              color: '#d63638'
+            },
+            onMouseDown: stop,
+            onClick: handleTrashAll,
+            children: "Trash"
+          })]
         }), (post.status === 'draft' || post.status === 'publish') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
           children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
             style: base,
@@ -665,6 +668,7 @@ function NodeRenderer({
     e.stopPropagation();
     node.toggle();
   };
+  const isHomePage = +node.data.id === homePageId;
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
     ref: canEditAll ? dragHandle : null,
     style: {
@@ -727,16 +731,23 @@ function NodeRenderer({
         },
         title: node.data.name,
         onDoubleClick: toggleRow,
-        children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("small", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("i", {
-            children: "\xA0-\xA0Front page"
-          })
+        children: [node.data.name, isHomePage ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("small", {
+          style: {
+            background: '#4F4F4F',
+            color: '#FFFFFF',
+            display: 'inline-block',
+            padding: '0 8px',
+            borderRadius: '12px',
+            marginLeft: '8px'
+          },
+          children: "Front page"
         }) : '']
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_NodeActions__WEBPACK_IMPORTED_MODULE_2__.NodeActions, {
         post: post,
         nodeId: node.id,
         active: isActive,
-        editable: canEditAll
+        editable: canEditAll,
+        isHomePage: isHomePage
       })]
     })]
   });

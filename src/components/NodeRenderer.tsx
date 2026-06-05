@@ -42,6 +42,8 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
     node.toggle();
   }
 
+  const isHomePage = +node.data.id === homePageId;
+
   return (
     <div
       ref={canEditAll ? dragHandle : null}
@@ -99,10 +101,14 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           onDoubleClick={toggleRow}
         >
           {node.data.name}
-          {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Front page</i></small>) : ''}
+          {isHomePage ? (
+            <small style={{
+              background: '#4F4F4F', color: '#FFFFFF', display: 'inline-block', padding: '0 8px', borderRadius: '12px', marginLeft: '8px'
+            }}>Front page</small>
+          ) : ''}
         </span>
-        <NodeActions post={post} nodeId={node.id} active={isActive} editable={canEditAll} />
+        <NodeActions post={post} nodeId={node.id} active={isActive} editable={canEditAll} isHomePage={isHomePage} />
       </span>
-    </div>
+    </div >
   );
 }

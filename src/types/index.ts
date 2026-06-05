@@ -40,6 +40,7 @@ export interface NodeActionsProps {
   nodeId: string;
   active: boolean;
   editable: boolean;
+  isHomePage: boolean;
 }
 
 declare global {
