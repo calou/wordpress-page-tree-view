@@ -35,6 +35,12 @@ export interface WptvConfig {
   exportNonce: string;
 }
 
+export interface NodeActionsProps {
+  post: WPPost;
+  nodeId: string;
+  active: boolean;
+}
+
 declare global {
   interface Window {
     wptvConfig: WptvConfig;

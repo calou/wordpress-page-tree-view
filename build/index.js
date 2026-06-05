@@ -438,20 +438,20 @@ async function movePost(restBase, id, parentId, menuOrder) {
 
 /***/ },
 
-/***/ "./src/components/NodeRenderer.tsx"
-/*!*****************************************!*\
-  !*** ./src/components/NodeRenderer.tsx ***!
-  \*****************************************/
+/***/ "./src/components/NodeActions.tsx"
+/*!****************************************!*\
+  !*** ./src/components/NodeActions.tsx ***!
+  \****************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   NodeRenderer: () => (/* binding */ NodeRenderer)
+/* harmony export */   NodeActions: () => (/* binding */ NodeActions)
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _context_TreeContext__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../context/TreeContext */ "./src/context/TreeContext.tsx");
-/* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
+/* harmony import */ var _api_wp__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../api/wp */ "./src/api/wp.ts");
+/* harmony import */ var _context_TreeContext__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../context/TreeContext */ "./src/context/TreeContext.tsx");
 /* harmony import */ var _utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/treeUtils */ "./src/utils/treeUtils.ts");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
@@ -460,32 +460,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const STATUS_ICONS = {
-  publish: {
-    icon: 'dashicons-admin-page',
-    color: '#787c82'
-  },
-  draft: {
-    icon: 'dashicons-edit',
-    color: '#dba617'
-  },
-  private: {
-    icon: 'dashicons-lock',
-    color: '#3858e9'
-  },
-  pending: {
-    icon: 'dashicons-clock',
-    color: '#996800'
-  },
-  future: {
-    icon: 'dashicons-calendar-alt',
-    color: '#2271b1'
-  },
-  trash: {
-    icon: 'dashicons-trash',
-    color: '#d63638'
-  }
-};
 function toCreatedNode(post) {
   return {
     id: String(post.id),
@@ -506,7 +480,8 @@ function buildSubtreeNodes(posts, parentId) {
 }
 function NodeActions({
   post,
-  nodeId
+  nodeId,
+  active
 }) {
   const {
     restBase,
@@ -514,7 +489,7 @@ function NodeActions({
     treeApiRef,
     setActionNodeId,
     clearSearch
-  } = (0,_context_TreeContext__WEBPACK_IMPORTED_MODULE_1__.useTreeContext)();
+  } = (0,_context_TreeContext__WEBPACK_IMPORTED_MODULE_2__.useTreeContext)();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
   const run = async fn => {
@@ -532,10 +507,23 @@ function NodeActions({
     e.stopPropagation();
     e.preventDefault();
   };
+  const handleAdd = (e, parent, menu_order) => {
+    stop(e);
+    run(async () => {
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
+        parent: post.id,
+        menu_order: 0
+      });
+      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addChildToNode)(prev, nodeId, toCreatedNode(newPost)));
+      treeApiRef.current?.open(nodeId);
+      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
+      setActionNodeId(null);
+    });
+  };
   const handleAddInside = e => {
     stop(e);
     run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.createPost)(`wp/v2/${restBase}`, {
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
         parent: post.id,
         menu_order: 0
       });
@@ -548,7 +536,7 @@ function NodeActions({
   const handleAddBefore = e => {
     stop(e);
     run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.createPost)(`wp/v2/${restBase}`, {
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
         parent: post.parent,
         menu_order: post.menu_order
       });
@@ -560,19 +548,10 @@ function NodeActions({
   const handleAddAfter = e => {
     stop(e);
     run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.createPost)(`wp/v2/${restBase}`, {
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
         parent: post.parent,
         menu_order: post.menu_order + 1
       });
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingAfter)(prev, nodeId, toCreatedNode(newPost)));
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
-  const handleDuplicate = e => {
-    stop(e);
-    run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.duplicatePost)(`wp/v2/${restBase}`, post);
       setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingAfter)(prev, nodeId, toCreatedNode(newPost)));
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
       setActionNodeId(null);
@@ -584,7 +563,7 @@ function NodeActions({
       const {
         root_id,
         posts
-      } = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.duplicateSubtree)(post.id);
+      } = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.duplicateSubtree)(post.id);
       const rootPost = posts.find(p => p.id === root_id);
       const rootNode = {
         id: String(rootPost.id),
@@ -597,47 +576,16 @@ function NodeActions({
       setActionNodeId(null);
     });
   };
-  const handleTrash = e => {
-    stop(e);
-    run(async () => {
-      if (!window.confirm(`Move "${post.title.rendered || post.slug}" to trash?`)) return;
-      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.trashPost)(`wp/v2/${restBase}`, post.id);
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.updateNodeInTree)(prev, nodeId, n => ({
-        ...n,
-        data: {
-          ...n.data,
-          status: 'trash'
-        }
-      })));
-      setActionNodeId(null);
-      clearSearch();
-    });
-  };
   const handleTrashAll = e => {
     stop(e);
     run(async () => {
       if (!window.confirm(`Move "${post.title.rendered || post.slug}" and all its descendants to trash?`)) return;
-      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.bulkUpdateStatus)(post.id, 'trash');
+      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.bulkUpdateStatus)(post.id, 'trash');
       setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.updateSubtreeInTree)(prev, nodeId, n => ({
         ...n,
         data: {
           ...n.data,
           status: 'trash'
-        }
-      })));
-      setActionNodeId(null);
-      clearSearch();
-    });
-  };
-  const handleRestore = e => {
-    stop(e);
-    run(async () => {
-      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.restorePost)(`wp/v2/${restBase}`, post.id);
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.updateNodeInTree)(prev, nodeId, n => ({
-        ...n,
-        data: {
-          ...n.data,
-          status: 'draft'
         }
       })));
       setActionNodeId(null);
@@ -648,7 +596,7 @@ function NodeActions({
     stop(e);
     run(async () => {
       if (!window.confirm(`Restore "${post.title.rendered || post.slug}" and all its descendants?`)) return;
-      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.bulkUpdateStatus)(post.id, 'draft');
+      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.bulkUpdateStatus)(post.id, 'draft');
       setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.updateSubtreeInTree)(prev, nodeId, n => ({
         ...n,
         data: {
@@ -660,25 +608,9 @@ function NodeActions({
       clearSearch();
     });
   };
-  const handlePublishAll = e => {
-    stop(e);
-    run(async () => {
-      if (!window.confirm(`Publish "${post.title.rendered || post.slug}" and all its descendants?`)) return;
-      await (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.bulkUpdateStatus)(post.id, 'publish');
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.updateSubtreeInTree)(prev, nodeId, n => ({
-        ...n,
-        data: {
-          ...n.data,
-          status: 'publish'
-        }
-      })));
-      setActionNodeId(null);
-      clearSearch();
-    });
-  };
   const handleExportAll = e => {
     stop(e);
-    (0,_api_wp__WEBPACK_IMPORTED_MODULE_2__.exportSubtree)(post.id);
+    (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.exportSubtree)(post.id);
     setActionNodeId(null);
   };
   const sep = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
@@ -713,26 +645,19 @@ function NodeActions({
         e.preventDefault();
       },
       onClick: e => e.stopPropagation(),
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: {
-          ...base,
-          color: '#00a32a'
-        },
-        onMouseDown: stop,
-        onClick: handleRestore,
-        children: "Restore"
-      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+      children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
         style: {
           ...base,
           color: '#00a32a'
         },
         onMouseDown: stop,
         onClick: handleRestoreAll,
-        children: "Restore all under"
+        children: "Restore"
       })]
     });
   }
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+    className: "wptv-node-actions",
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -744,32 +669,7 @@ function NodeActions({
       e.preventDefault();
     },
     onClick: e => e.stopPropagation(),
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: base,
-      onMouseDown: stop,
-      onClick: handleAddInside,
-      children: "+Inside"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: base,
-      onMouseDown: stop,
-      onClick: handleAddBefore,
-      children: "+Before"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: base,
-      onMouseDown: stop,
-      onClick: handleAddAfter,
-      children: "+After"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: base,
-      onMouseDown: stop,
-      onClick: handleDuplicate,
-      children: "Duplicate"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: base,
-      onMouseDown: stop,
-      onClick: handleDuplicateAll,
-      children: "Duplicate all under"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
       href: `${adminUrl}post.php?post=${post.id}&action=edit`,
       style: base,
       onMouseDown: stop,
@@ -791,40 +691,95 @@ function NodeActions({
         },
         children: "View"
       })]
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: {
-        ...base,
-        color: '#d63638'
-      },
-      onMouseDown: stop,
-      onClick: handleTrash,
-      children: "Trash"
-    }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-      style: {
-        ...base,
-        color: '#d63638'
-      },
-      onMouseDown: stop,
-      onClick: handleTrashAll,
-      children: "Trash all under"
-    }), (post.status === 'draft' || post.status === 'publish') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+    }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
       children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: {
-          ...base,
-          color: '#00a32a'
-        },
+        style: base,
         onMouseDown: stop,
-        onClick: handlePublishAll,
-        children: "Publish all under"
+        onClick: handleAddInside,
+        children: "+Inside"
       }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
         style: base,
         onMouseDown: stop,
-        onClick: handleExportAll,
-        children: "Export all under"
+        onClick: handleAddBefore,
+        children: "+Before"
+      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        style: base,
+        onMouseDown: stop,
+        onClick: handleAddAfter,
+        children: "+After"
+      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        style: base,
+        onMouseDown: stop,
+        onClick: handleDuplicateAll,
+        children: "Duplicate"
+      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        style: {
+          ...base,
+          color: '#d63638'
+        },
+        onMouseDown: stop,
+        onClick: handleTrashAll,
+        children: "Trash"
+      }), (post.status === 'draft' || post.status === 'publish') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+        children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+          style: base,
+          onMouseDown: stop,
+          onClick: handleExportAll,
+          children: "Export"
+        })]
       })]
     })]
   });
 }
+
+/***/ },
+
+/***/ "./src/components/NodeRenderer.tsx"
+/*!*****************************************!*\
+  !*** ./src/components/NodeRenderer.tsx ***!
+  \*****************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   NodeRenderer: () => (/* binding */ NodeRenderer)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _context_TreeContext__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../context/TreeContext */ "./src/context/TreeContext.tsx");
+/* harmony import */ var _NodeActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./NodeActions */ "./src/components/NodeActions.tsx");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
+
+
+
+
+const STATUS_ICONS = {
+  publish: {
+    icon: 'dashicons-admin-page',
+    color: '#787c82'
+  },
+  draft: {
+    icon: 'dashicons-edit',
+    color: '#dba617'
+  },
+  private: {
+    icon: 'dashicons-lock',
+    color: '#3858e9'
+  },
+  pending: {
+    icon: 'dashicons-clock',
+    color: '#996800'
+  },
+  future: {
+    icon: 'dashicons-calendar-alt',
+    color: '#2271b1'
+  },
+  trash: {
+    icon: 'dashicons-trash',
+    color: '#d63638'
+  }
+};
 function NodeRenderer({
   node,
   style,
@@ -846,7 +801,7 @@ function NodeRenderer({
   const handleRowClick = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(_ => {
     setActionNodeId(isActive ? null : node.id);
   }, [isActive, node.id, setActionNodeId]);
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
     ref: canEditAll ? dragHandle : null,
     style: {
       ...style,
@@ -864,7 +819,7 @@ function NodeRenderer({
     },
     onClick: handleRowClick,
     className: "wptv-node",
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
       style: {
         display: 'inline-flex',
         width: 16,
@@ -877,7 +832,7 @@ function NodeRenderer({
         e.stopPropagation();
         node.toggle();
       },
-      children: node.data.isLoadingChildren ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+      children: node.data.isLoadingChildren ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
         className: "spinner is-active",
         style: {
           width: 10,
@@ -885,14 +840,14 @@ function NodeRenderer({
           margin: 0
         }
       }) : !node.isLeaf ? node.isOpen ? '▾' : '▸' : ''
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
       className: `dashicons ${statusIcon.icon}`,
       style: {
         fontSize: 18,
         color: statusIcon.color,
         flexShrink: 0
       }
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("span", {
       style: {
         flex: 1,
         display: 'flex',
@@ -900,7 +855,7 @@ function NodeRenderer({
         gap: 6,
         minWidth: 0
       },
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("span", {
         style: {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -908,45 +863,15 @@ function NodeRenderer({
           fontSize: 15
         },
         title: node.data.name,
-        children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("small", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
+        children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("small", {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("i", {
             children: "\xA0-\xA0Front page"
           })
         }) : '']
-      }), isActive ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(NodeActions, {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_NodeActions__WEBPACK_IMPORTED_MODULE_2__.NodeActions, {
         post: post,
-        nodeId: node.id
-      }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
-        className: "wptv-node-actions",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
-          href: editUrl,
-          onClick: e => e.stopPropagation(),
-          style: {
-            fontSize: 15,
-            color: '#2271b1',
-            textDecoration: 'none'
-          },
-          children: "Edit"
-        }), post.status === 'publish' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
-            style: {
-              color: '#ccc',
-              margin: '0 3px'
-            },
-            children: "|"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
-            href: post.link,
-            onClick: e => e.stopPropagation(),
-            target: "_blank",
-            rel: "noreferrer",
-            style: {
-              fontSize: 15,
-              color: '#2271b1',
-              textDecoration: 'none'
-            },
-            children: "View"
-          })]
-        })]
+        nodeId: node.id,
+        active: isActive
       })]
     })]
   });
