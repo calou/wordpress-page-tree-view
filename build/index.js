@@ -1088,7 +1088,7 @@ function TreePanel() {
           onToggle: handleToggle,
           width: width,
           height: height,
-          rowHeight: 44,
+          rowHeight: 32,
           indent: 24,
           overscanCount: 1,
           openByDefault: isInSearch,
