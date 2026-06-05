@@ -411,9 +411,9 @@ function NodeActions({
       setBusy(false);
     }
   };
-  const unsetActionId = e => {
+  const onClick = e => {
     e.stopPropagation();
-    setActionNodeId(null);
+    setActionNodeId(nodeId);
   };
   const handleAdd = (e, parent, menu_order, callback) => {
     stop(e);
@@ -539,23 +539,21 @@ function NodeActions({
     },
     onMouseDown: stop,
     onClick: e => e.stopPropagation(),
-    children: [post.status === 'publish' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
-      children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
-        href: post.link,
-        target: "_blank",
-        rel: "noreferrer",
-        style: base,
-        onMouseDown: stop,
-        onClick: unsetActionId,
-        children: "View"
-      })]
+    children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
+      href: post.link,
+      target: "_blank",
+      rel: "noreferrer",
+      style: base,
+      onMouseDown: stop,
+      onClick: onClick,
+      children: post.status === 'publish' ? 'View' : 'Preview'
     }), editable && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
       children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
         href: `${adminUrl}post.php?post=${post.id}&action=edit`,
         target: "_blank",
         style: base,
         onMouseDown: stop,
-        onClick: unsetActionId,
+        onClick: onClick,
         children: "Edit"
       }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
         children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {

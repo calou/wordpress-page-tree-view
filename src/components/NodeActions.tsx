@@ -38,8 +38,6 @@ const stop = (e: React.MouseEvent) => {
   e.preventDefault();
 };
 
-
-
 export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps) {
   const { setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
@@ -57,9 +55,9 @@ export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps
     }
   };
 
-  const unsetActionId = (e: React.MouseEvent) => {
+  const onClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActionNodeId(null);
+    setActionNodeId(nodeId);
   };
 
   const handleAdd = (e: React.MouseEvent, parent: number, menu_order: number, callback: (prev: TreeNode[], nodeId: string, newNode: TreeNode) => TreeNode[]): void => {
@@ -167,21 +165,17 @@ export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps
       onMouseDown={stop}
       onClick={(e) => e.stopPropagation()}
     >
-      {post.status === 'publish' && (
-        <>
-          {sep}
-          <a
-            href={post.link}
-            target="_blank"
-            rel="noreferrer"
-            style={base}
-            onMouseDown={stop}
-            onClick={unsetActionId}
-          >
-            View
-          </a>
-        </>
-      )}
+      {sep}
+      <a
+        href={post.link}
+        target="_blank"
+        rel="noreferrer"
+        style={base}
+        onMouseDown={stop}
+        onClick={onClick}
+      >
+        {post.status === 'publish' ? 'View' : 'Preview'}
+      </a>
       {editable && (
         <>
           {sep}
@@ -190,7 +184,7 @@ export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps
             target="_blank"
             style={base}
             onMouseDown={stop}
-            onClick={unsetActionId}
+            onClick={onClick}
           >
             Edit
           </a>
