@@ -92,8 +92,8 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: 18,
-            lineHeight: '24px',
+            fontSize: 16,
+            lineHeight: '22px',
           }}
           title={node.data.name}
           onDoubleClick={toggleRow}
