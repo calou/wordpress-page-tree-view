@@ -7,7 +7,6 @@ import {
   addSiblingAfter,
   addSiblingBefore,
   htmlToText,
-  updateNodeInTree,
   updateSubtreeInTree,
 } from '../utils/treeUtils';
 
@@ -34,6 +33,12 @@ function buildSubtreeNodes(posts: import('../types').WPPost[], parentId: number)
     }));
 }
 
+const stop = (e: React.MouseEvent) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
+
 export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
   const { restBase, setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
@@ -51,65 +56,21 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
     }
   };
 
-  const stop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
-  const handleAdd = (e: React.MouseEvent, parent: number, menu_order: number): void => {
+  const handleAdd = (e: React.MouseEvent, parent: number, menu_order: number, callback: (prev: TreeNode[], nodeId: string, newNode: TreeNode) => TreeNode[]): void => {
     stop(e);
     run(async () => {
-      const newPost = await createPost(`wp/v2/${restBase}`, {
-        parent: post.id,
-        menu_order: 0,
-      });
-      setTree((prev) => addChildToNode(prev, nodeId, toCreatedNode(newPost)));
+      const newPost = await createPost(`wp/v2/${restBase}`, { parent, menu_order, });
+      setTree((prev) => callback(prev, nodeId, toCreatedNode(newPost)));
       treeApiRef.current?.open(nodeId);
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-
-  };
-
-  const handleAddInside = (e: React.MouseEvent) => {
-    stop(e);
-    run(async () => {
-      const newPost = await createPost(`wp/v2/${restBase}`, {
-        parent: post.id,
-        menu_order: 0,
-      });
-      setTree((prev) => addChildToNode(prev, nodeId, toCreatedNode(newPost)));
-      treeApiRef.current?.open(nodeId);
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
     });
   };
 
-  const handleAddBefore = (e: React.MouseEvent) => {
-    stop(e);
-    run(async () => {
-      const newPost = await createPost(`wp/v2/${restBase}`, {
-        parent: post.parent,
-        menu_order: post.menu_order,
-      });
-      setTree((prev) => addSiblingBefore(prev, nodeId, toCreatedNode(newPost)));
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
+  const handleAddInside = (e: React.MouseEvent) => handleAdd(e, post.id, 0, addChildToNode);
 
-  const handleAddAfter = (e: React.MouseEvent) => {
-    stop(e);
-    run(async () => {
-      const newPost = await createPost(`wp/v2/${restBase}`, {
-        parent: post.parent,
-        menu_order: post.menu_order + 1,
-      });
-      setTree((prev) => addSiblingAfter(prev, nodeId, toCreatedNode(newPost)));
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
+  const handleAddBefore = (e: React.MouseEvent) => handleAdd(e, post.parent, post.menu_order - 1, addSiblingBefore);
+
+  const handleAddAfter = (e: React.MouseEvent) => handleAdd(e, post.parent, post.menu_order + 1, addSiblingAfter);
 
   const handleDuplicateAll = (e: React.MouseEvent) => {
     stop(e);
@@ -226,11 +187,12 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
       {!!active && (
         <>
           {sep}
-          < button style={base} onMouseDown={stop} onClick={handleAddInside}>+Inside</button>
-          {sep}
-          <button style={base} onMouseDown={stop} onClick={handleAddBefore}>+Before</button>
-          {sep}
-          <button style={base} onMouseDown={stop} onClick={handleAddAfter}>+After</button>
+          < button style={base} onMouseDown={stop} onClick={handleAddInside}>New page</button>
+          (
+          <button style={base} onMouseDown={stop} onClick={handleAddBefore}>before</button>
+          ,
+          <button style={base} onMouseDown={stop} onClick={handleAddAfter}>after</button>
+          )
           {sep}
           <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate</button>
           {sep}

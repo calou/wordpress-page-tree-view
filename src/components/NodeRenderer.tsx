@@ -17,8 +17,6 @@ const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
 export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
   const post = node.data.data;
 
-  const adminUrl = window.wptvConfig?.adminUrl ?? '';
-  const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
   const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
 
   const { homePageId, actionNodeId, setActionNodeId, canEditAll } = useTreeContext();

@@ -478,6 +478,10 @@ function buildSubtreeNodes(posts, parentId) {
     data: p
   }));
 }
+const stop = e => {
+  e.stopPropagation();
+  e.preventDefault();
+};
 function NodeActions({
   post,
   nodeId,
@@ -503,60 +507,21 @@ function NodeActions({
       setBusy(false);
     }
   };
-  const stop = e => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-  const handleAdd = (e, parent, menu_order) => {
+  const handleAdd = (e, parent, menu_order, callback) => {
     stop(e);
     run(async () => {
       const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
-        parent: post.id,
-        menu_order: 0
+        parent,
+        menu_order
       });
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addChildToNode)(prev, nodeId, toCreatedNode(newPost)));
+      setTree(prev => callback(prev, nodeId, toCreatedNode(newPost)));
       treeApiRef.current?.open(nodeId);
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
     });
   };
-  const handleAddInside = e => {
-    stop(e);
-    run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
-        parent: post.id,
-        menu_order: 0
-      });
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addChildToNode)(prev, nodeId, toCreatedNode(newPost)));
-      treeApiRef.current?.open(nodeId);
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
-  const handleAddBefore = e => {
-    stop(e);
-    run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
-        parent: post.parent,
-        menu_order: post.menu_order
-      });
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingBefore)(prev, nodeId, toCreatedNode(newPost)));
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
-  const handleAddAfter = e => {
-    stop(e);
-    run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)(`wp/v2/${restBase}`, {
-        parent: post.parent,
-        menu_order: post.menu_order + 1
-      });
-      setTree(prev => (0,_utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingAfter)(prev, nodeId, toCreatedNode(newPost)));
-      window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');
-      setActionNodeId(null);
-    });
-  };
+  const handleAddInside = e => handleAdd(e, post.id, 0, _utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addChildToNode);
+  const handleAddBefore = e => handleAdd(e, post.parent, post.menu_order - 1, _utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingBefore);
+  const handleAddAfter = e => handleAdd(e, post.parent, post.menu_order + 1, _utils_treeUtils__WEBPACK_IMPORTED_MODULE_3__.addSiblingAfter);
   const handleDuplicateAll = e => {
     stop(e);
     run(async () => {
@@ -696,18 +661,18 @@ function NodeActions({
         style: base,
         onMouseDown: stop,
         onClick: handleAddInside,
-        children: "+Inside"
-      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        children: "New page"
+      }), "(", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
         style: base,
         onMouseDown: stop,
         onClick: handleAddBefore,
-        children: "+Before"
-      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        children: "before"
+      }), ",", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
         style: base,
         onMouseDown: stop,
         onClick: handleAddAfter,
-        children: "+After"
-      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        children: "after"
+      }), ")", sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
         style: base,
         onMouseDown: stop,
         onClick: handleDuplicateAll,
@@ -786,8 +751,6 @@ function NodeRenderer({
   dragHandle
 }) {
   const post = node.data.data;
-  const adminUrl = window.wptvConfig?.adminUrl ?? '';
-  const editUrl = `${adminUrl}post.php?post=${post.id}&action=edit`;
   const statusIcon = STATUS_ICONS[post.status] ?? STATUS_ICONS.publish;
   const {
     homePageId,
