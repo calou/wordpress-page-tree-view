@@ -23,15 +23,25 @@ define( 'WPTV_VERSION', '1.0.0' );
  * Register the admin menu page.
  */
 function wptv_add_admin_menu(): void {
-	add_menu_page(
+	add_submenu_page(
+		'edit.php?post_type=page',   // Parent slug (Pages menu)
 		__( 'Tree View', 'wordpress-page-tree-view' ),
 		__( 'Tree View', 'wordpress-page-tree-view' ),
 		'edit_pages',
 		'wordpress-page-tree-view',
 		'wptv_render_admin_page',
-		'dashicons-list-view',
-		20
+		0
 	);
+
+	#add_menu_page(
+	#   __( 'Tree View', 'wordpress-page-tree-view' ),
+	#   __( 'Tree View', 'wordpress-page-tree-view' ),
+	#   'edit_pages',
+	#   'wordpress-page-tree-view',
+	#   'wptv_render_admin_page',
+	#   'dashicons-list-view',
+	#   20
+	#);
 }
 add_action( 'admin_menu', 'wptv_add_admin_menu' );
 
@@ -59,7 +69,7 @@ function wptv_render_admin_page(): void {
  * Enqueue plugin scripts and styles on the plugin admin page.
  */
 function wptv_enqueue_assets( string $hook_suffix ): void {
-	if ( 'toplevel_page_wordpress-page-tree-view' !== $hook_suffix ) {
+	if ( 'pages_page_wordpress-page-tree-view' !== $hook_suffix ) {
 		return;
 	}
 
