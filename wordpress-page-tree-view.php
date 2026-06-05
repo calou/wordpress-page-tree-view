@@ -39,7 +39,7 @@ add_action( 'admin_menu', 'wptv_add_admin_menu' );
  * Redirect the default Pages list to the Tree View page.
  */
 function wptv_redirect_pages_list(): void {
-	$referer = wp_get_referer();
+	$referer = wp_get_raw_referer();
 	global $pagenow;
 	if ( 'edit.php' === $pagenow && isset( $_GET['post_type'] ) && 'page' === $_GET['post_type'] && $referer && strpos( $referer, 'action=edit' ) !== false ) {
 		wp_safe_redirect( admin_url( 'admin.php?page=wordpress-page-tree-view' ) );
