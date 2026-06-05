@@ -37,6 +37,11 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
     [isActive, node.id, setActionNodeId]
   );
 
+  const toggleRow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    node.toggle();
+  }
+
   return (
     <div
       ref={canEditAll ? dragHandle : null}
@@ -68,10 +73,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           justifyContent: 'center',
           marginLeft: '8px',
         }}
-        onClick={(e) => {
-          e.stopPropagation();
-          node.toggle();
-        }}
+        onClick={toggleRow}
       >
         {node.data.isLoadingChildren ? (
           <span className="spinner is-active" style={{ width: 10, height: 10, margin: 0 }} />
@@ -91,8 +93,10 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             fontSize: 18,
+            lineHeight: '24px',
           }}
           title={node.data.name}
+          onDoubleClick={toggleRow}
         >
           {node.data.name}
           {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Front page</i></small>) : ''}

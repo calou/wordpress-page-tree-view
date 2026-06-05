@@ -136,10 +136,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function App() {
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_components_TreePanel__WEBPACK_IMPORTED_MODULE_1__.TreePanel, {
-    restBase: "pages",
-    hierarchical: true
-  }, 'pages');
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_components_TreePanel__WEBPACK_IMPORTED_MODULE_1__.TreePanel, {}, 'pages');
 }
 
 /***/ },
@@ -664,6 +661,10 @@ function NodeRenderer({
   const handleRowClick = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(_ => {
     setActionNodeId(isActive ? null : node.id);
   }, [isActive, node.id, setActionNodeId]);
+  const toggleRow = e => {
+    e.stopPropagation();
+    node.toggle();
+  };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
     ref: canEditAll ? dragHandle : null,
     style: {
@@ -692,10 +693,7 @@ function NodeRenderer({
         justifyContent: 'center',
         marginLeft: '8px'
       },
-      onClick: e => {
-        e.stopPropagation();
-        node.toggle();
-      },
+      onClick: toggleRow,
       children: node.data.isLoadingChildren ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
         className: "spinner is-active",
         style: {
@@ -724,9 +722,11 @@ function NodeRenderer({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          fontSize: 18
+          fontSize: 18,
+          lineHeight: '24px'
         },
         title: node.data.name,
+        onDoubleClick: toggleRow,
         children: [node.data.name, +node.data.id === homePageId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("small", {
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("i", {
             children: "\xA0-\xA0Front page"
@@ -1088,7 +1088,7 @@ function TreePanel() {
           onToggle: handleToggle,
           width: width,
           height: height,
-          rowHeight: 42,
+          rowHeight: 44,
           indent: 24,
           overscanCount: 1,
           openByDefault: isInSearch,

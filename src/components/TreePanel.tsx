@@ -268,7 +268,7 @@ export function TreePanel() {
             onToggle={handleToggle}
             width={width}
             height={height}
-            rowHeight={42}
+            rowHeight={44}
             indent={24}
             overscanCount={1}
             openByDefault={isInSearch}
