@@ -27,7 +27,7 @@ function wptv_add_admin_menu(): void {
 		'edit.php?post_type=page',   // Parent slug (Pages menu)
 		__( 'Tree View', 'wordpress-page-tree-view' ),
 		__( 'Tree View', 'wordpress-page-tree-view' ),
-		'edit_pages',
+		'read',
 		'wordpress-page-tree-view',
 		'wptv_render_admin_page',
 		0

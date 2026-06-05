@@ -97,7 +97,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
           {node.data.name}
           {+node.data.id === homePageId ? (<small><i>&nbsp;-&nbsp;Front page</i></small>) : ''}
         </span>
-        <NodeActions post={post} nodeId={node.id} active={isActive} />
+        <NodeActions post={post} nodeId={node.id} active={isActive} editable={canEditAll} />
       </span>
     </div>
   );

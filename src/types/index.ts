@@ -39,6 +39,7 @@ export interface NodeActionsProps {
   post: WPPost;
   nodeId: string;
   active: boolean;
+  editable: boolean;
 }
 
 declare global {

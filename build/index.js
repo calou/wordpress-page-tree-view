@@ -389,7 +389,8 @@ const stop = e => {
 function NodeActions({
   post,
   nodeId,
-  active
+  active,
+  editable
 }) {
   const {
     setTree,
@@ -504,7 +505,7 @@ function NodeActions({
     pointerEvents: busy ? 'none' : 'auto',
     flexShrink: 0
   };
-  if (post.status === 'trash') {
+  if (editable && post.status === 'trash') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
       style: {
         display: 'flex',
@@ -538,14 +539,7 @@ function NodeActions({
     },
     onMouseDown: stop,
     onClick: e => e.stopPropagation(),
-    children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
-      href: `${adminUrl}post.php?post=${post.id}&action=edit`,
-      target: "_blank",
-      style: base,
-      onMouseDown: stop,
-      onClick: unsetActionId,
-      children: "Edit"
-    }), post.status === 'publish' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+    children: [post.status === 'publish' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
       children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
         href: post.link,
         target: "_blank",
@@ -555,41 +549,50 @@ function NodeActions({
         onClick: unsetActionId,
         children: "View"
       })]
-    }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
-      children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+    }), editable && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+      children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
+        href: `${adminUrl}post.php?post=${post.id}&action=edit`,
+        target: "_blank",
         style: base,
         onMouseDown: stop,
-        onClick: handleAddInside,
-        children: "New page"
-      }), "(", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: base,
-        onMouseDown: stop,
-        onClick: handleAddBefore,
-        children: "before"
-      }), ",", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: base,
-        onMouseDown: stop,
-        onClick: handleAddAfter,
-        children: "after"
-      }), ")", sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: base,
-        onMouseDown: stop,
-        onClick: handleDuplicateAll,
-        children: "Duplicate"
-      }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
-        style: {
-          ...base,
-          color: '#d63638'
-        },
-        onMouseDown: stop,
-        onClick: handleTrashAll,
-        children: "Trash"
-      }), (post.status === 'draft' || post.status === 'publish') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+        onClick: unsetActionId,
+        children: "Edit"
+      }), !!active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
         children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
           style: base,
           onMouseDown: stop,
-          onClick: handleExportAll,
-          children: "Export"
+          onClick: handleAddInside,
+          children: "New page"
+        }), "(", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+          style: base,
+          onMouseDown: stop,
+          onClick: handleAddBefore,
+          children: "before"
+        }), ",", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+          style: base,
+          onMouseDown: stop,
+          onClick: handleAddAfter,
+          children: "after"
+        }), ")", sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+          style: base,
+          onMouseDown: stop,
+          onClick: handleDuplicateAll,
+          children: "Duplicate"
+        }), sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+          style: {
+            ...base,
+            color: '#d63638'
+          },
+          onMouseDown: stop,
+          onClick: handleTrashAll,
+          children: "Trash"
+        }), (post.status === 'draft' || post.status === 'publish') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+          children: [sep, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+            style: base,
+            onMouseDown: stop,
+            onClick: handleExportAll,
+            children: "Export"
+          })]
         })]
       })]
     })]
@@ -734,7 +737,8 @@ function NodeRenderer({
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_NodeActions__WEBPACK_IMPORTED_MODULE_2__.NodeActions, {
         post: post,
         nodeId: node.id,
-        active: isActive
+        active: isActive,
+        editable: canEditAll
       })]
     })]
   });
@@ -783,7 +787,7 @@ function DropCursor({
     style: {
       position: 'absolute',
       top,
-      left: left + indent,
+      left: left + indent - 12,
       right: 0,
       height: 2,
       background: '#2271b1',
@@ -1088,7 +1092,7 @@ function TreePanel() {
           height: height,
           rowHeight: 42,
           indent: 24,
-          overscanCount: 10,
+          overscanCount: 1,
           openByDefault: isInSearch,
           renderCursor: DropCursor,
           children: _NodeRenderer__WEBPACK_IMPORTED_MODULE_8__.NodeRenderer

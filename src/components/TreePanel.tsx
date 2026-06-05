@@ -16,7 +16,7 @@ function DropCursor({ top, left, indent }: CursorProps) {
       style={{
         position: 'absolute',
         top,
-        left: left + indent,
+        left: left + indent - 12,
         right: 0,
         height: 2,
         background: '#2271b1',
@@ -270,7 +270,7 @@ export function TreePanel() {
             height={height}
             rowHeight={42}
             indent={24}
-            overscanCount={10}
+            overscanCount={1}
             openByDefault={isInSearch}
             renderCursor={DropCursor}
           >
@@ -278,6 +278,6 @@ export function TreePanel() {
           </Tree>
         </div>
       </div>
-    </TreeContext.Provider>
+    </TreeContext.Provider >
   );
 }

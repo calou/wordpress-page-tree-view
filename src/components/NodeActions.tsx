@@ -40,7 +40,7 @@ const stop = (e: React.MouseEvent) => {
 
 
 
-export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
+export function NodeActions({ post, nodeId, active, editable }: NodeActionsProps) {
   const { setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = useState(false);
@@ -148,7 +148,7 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
     flexShrink: 0,
   };
 
-  if (post.status === 'trash') {
+  if (editable && post.status === 'trash') {
     return (
       <span
         style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
@@ -167,16 +167,6 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
       onMouseDown={stop}
       onClick={(e) => e.stopPropagation()}
     >
-      {sep}
-      <a
-        href={`${adminUrl}post.php?post=${post.id}&action=edit`}
-        target="_blank"
-        style={base}
-        onMouseDown={stop}
-        onClick={unsetActionId}
-      >
-        Edit
-      </a>
       {post.status === 'publish' && (
         <>
           {sep}
@@ -192,33 +182,48 @@ export function NodeActions({ post, nodeId, active }: NodeActionsProps) {
           </a>
         </>
       )}
-      {!!active && (
+      {editable && (
         <>
           {sep}
-          < button style={base} onMouseDown={stop} onClick={handleAddInside}>New page</button>
-          (
-          <button style={base} onMouseDown={stop} onClick={handleAddBefore}>before</button>
-          ,
-          <button style={base} onMouseDown={stop} onClick={handleAddAfter}>after</button>
-          )
-          {sep}
-          <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate</button>
-          {sep}
-          <button
-            style={{ ...base, color: '#d63638' }}
+          <a
+            href={`${adminUrl}post.php?post=${post.id}&action=edit`}
+            target="_blank"
+            style={base}
             onMouseDown={stop}
-            onClick={handleTrashAll}
+            onClick={unsetActionId}
           >
-            Trash
-          </button>
-          {
-            (post.status === 'draft' || post.status === 'publish') && (
-              <>
-                {sep}
-                <button style={base} onMouseDown={stop} onClick={handleExportAll}>Export</button>
-              </>
-            )
-          }
+            Edit
+          </a>
+
+          {!!active && (
+            <>
+              {sep}
+              < button style={base} onMouseDown={stop} onClick={handleAddInside}>New page</button>
+              (
+              <button style={base} onMouseDown={stop} onClick={handleAddBefore}>before</button>
+              ,
+              <button style={base} onMouseDown={stop} onClick={handleAddAfter}>after</button>
+              )
+              {sep}
+              <button style={base} onMouseDown={stop} onClick={handleDuplicateAll}>Duplicate</button>
+              {sep}
+              <button
+                style={{ ...base, color: '#d63638' }}
+                onMouseDown={stop}
+                onClick={handleTrashAll}
+              >
+                Trash
+              </button>
+              {
+                (post.status === 'draft' || post.status === 'publish') && (
+                  <>
+                    {sep}
+                    <button style={base} onMouseDown={stop} onClick={handleExportAll}>Export</button>
+                  </>
+                )
+              }
+            </>
+          )}
         </>
       )}
     </span >
