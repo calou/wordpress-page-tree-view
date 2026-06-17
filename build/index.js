@@ -150,13 +150,14 @@ function App() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   bulkUpdateStatus: () => (/* binding */ bulkUpdateStatus),
-/* harmony export */   createPost: () => (/* binding */ createPost),
+/* harmony export */   createPage: () => (/* binding */ createPage),
 /* harmony export */   duplicatePost: () => (/* binding */ duplicatePost),
 /* harmony export */   duplicateSubtree: () => (/* binding */ duplicateSubtree),
 /* harmony export */   exportSubtree: () => (/* binding */ exportSubtree),
 /* harmony export */   fetchChildren: () => (/* binding */ fetchChildren),
 /* harmony export */   fetchPostsByIds: () => (/* binding */ fetchPostsByIds),
 /* harmony export */   fetchRootPages: () => (/* binding */ fetchRootPages),
+/* harmony export */   getPage: () => (/* binding */ getPage),
 /* harmony export */   movePost: () => (/* binding */ movePost),
 /* harmony export */   restorePost: () => (/* binding */ restorePost),
 /* harmony export */   searchPosts: () => (/* binding */ searchPosts),
@@ -210,7 +211,7 @@ async function fetchChildren(parentId) {
 /**
  * Create a new post (page, CPT, etc.).
  */
-async function createPost(data) {
+async function createPage(data) {
   return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
     path: `/wp/v2/pages`,
     method: 'POST',
@@ -284,6 +285,15 @@ async function trashPost(restBase, id) {
   });
 }
 
+/**
+ * Get a single post
+ */
+async function getPage(id) {
+  return _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_0___default()({
+    path: `/wp/v2/pages/${id}`,
+    method: 'GET'
+  });
+}
 /**
  * Duplicate a post and all its descendants server-side.
  * Returns the root ID of the new subtree and a flat list of all created posts.
@@ -417,7 +427,7 @@ function NodeActions({
   const handleAdd = (e, parent, menu_order, callback) => {
     stop(e);
     run(async () => {
-      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPost)({
+      const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_1__.createPage)({
         parent,
         menu_order
       });
@@ -849,6 +859,7 @@ function TreePanel() {
   const [searchTerm, setSearchTerm] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)('');
   const [searchResults, setSearchResults] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
   const [isSearching, setIsSearching] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
+  const [isCreating, setIsCreating] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
   const storageKey = 'wptv_open_pages';
   const openIdsRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(new Set());
@@ -864,6 +875,31 @@ function TreePanel() {
     return new Set();
   });
   const clearSearch = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(() => setSearchTerm(''), []);
+  const handleNewPage = async e => {
+    setIsCreating(true);
+    let parent = !!actionNodeId ? +actionNodeId : 0;
+    let menu_order = 0;
+    const value = e.target.value;
+    if (parent !== 0 && value !== 'inside') {
+      const page = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_3__.getPage)(parent);
+      switch (value) {
+        case 'before':
+          parent = page.parent;
+          menu_order = page.menu_order - 1;
+          break;
+        case 'after':
+          parent = page.parent;
+          menu_order = page.menu_order + 1;
+          break;
+      }
+    }
+    const newPost = await (0,_api_wp__WEBPACK_IMPORTED_MODULE_3__.createPage)({
+      parent,
+      menu_order
+    });
+    window.open(`${window.wptvConfig?.adminUrl ?? ''}post.php?post=${newPost.id}&action=edit`, '_blank');
+    setIsCreating(false);
+  };
 
   // Fetch matching pages + their full ancestor chains, then build a tree from them
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
@@ -1051,18 +1087,37 @@ function TreePanel() {
         flexDirection: 'column',
         height: '100%'
       },
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
         style: {
+          display: 'flex',
+          gap: '8px',
           padding: '0 4px 8px',
           flexShrink: 0
         },
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("input", {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("select", {
+          onChange: handleNewPage,
+          disabled: isCreating,
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("option", {
+            disabled: true,
+            selected: true,
+            children: "New page..."
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("option", {
+            value: "inside",
+            children: "New page inside"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("option", {
+            value: "before",
+            children: "New page before"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("option", {
+            value: "after",
+            children: "New page after"
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("input", {
           type: "search",
           placeholder: "Search all pages\u2026",
           value: searchTerm,
           onChange: e => setSearchTerm(e.target.value),
           className: "wptv-search"
-        })
+        })]
       }), isSearching && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
         style: {
           padding: '8px 4px',

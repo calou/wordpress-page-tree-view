@@ -54,8 +54,8 @@ export async function fetchChildren(parentId: number): Promise<WPPost[]> {
 /**
  * Create a new post (page, CPT, etc.).
  */
-export async function createPost(
-  data: { title?: string; parent: number; menu_order: number; status?: string }
+export async function createPage(
+  data: { parent: number; menu_order: number; }
 ): Promise<WPPost> {
   return apiFetch<WPPost>({
     path: `/wp/v2/pages`,
@@ -133,6 +133,15 @@ export async function trashPost(restBase: string, id: number): Promise<WPPost> {
   });
 }
 
+/**
+ * Get a single post
+ */
+export async function getPage(id: number): Promise<WPPost> {
+  return apiFetch<WPPost>({
+    path: `/wp/v2/pages/${id}`,
+    method: 'GET',
+  });
+}
 /**
  * Duplicate a post and all its descendants server-side.
  * Returns the root ID of the new subtree and a flat list of all created posts.

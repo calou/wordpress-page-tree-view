@@ -68,3 +68,15 @@
   text-decoration: underline;
 }
 
+.wptv-creating::after {
+  content: '.';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  21%, 40% { content: '..'; }
+  41%, 60% { content: '...'; }
+  61%, 100% { content: ''; }
+}
+

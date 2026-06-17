@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { bulkUpdateStatus, createPost, duplicateSubtree, exportSubtree } from '../api/wp';
+import { bulkUpdateStatus, createPage, duplicateSubtree, exportSubtree } from '../api/wp';
 import { useTreeContext } from '../context/TreeContext';
 import type { NodeActionsProps, TreeNode, WPPost } from '../types';
 import {
@@ -63,7 +63,7 @@ export function NodeActions({ post, nodeId, active, editable, isHomePage, handle
   const handleAdd = (e: React.MouseEvent, parent: number, menu_order: number, callback: (prev: TreeNode[], nodeId: string, newNode: TreeNode) => TreeNode[]): void => {
     stop(e);
     run(async () => {
-      const newPost = await createPost({ parent, menu_order, });
+      const newPost = await createPage({ parent, menu_order, });
       setTree((prev) => callback(prev, nodeId, toCreatedNode(newPost)));
       treeApiRef.current?.open(nodeId);
       window.open(`${adminUrl}post.php?post=${newPost.id}&action=edit`, '_blank');

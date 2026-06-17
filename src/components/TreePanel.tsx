@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CursorProps, MoveHandler, TreeApi } from 'react-arborist';
 import { Tree } from 'react-arborist';
 import useResizeObserver from 'use-resize-observer';
-import { fetchPostsByIds, searchPosts } from '../api/wp';
+import { createPage, fetchPostsByIds, getPage, searchPosts } from '../api/wp';
 import { TreeContext } from '../context/TreeContext';
 import { useMove } from '../hooks/useMove';
 import { useTreeData } from '../hooks/useTreeData';
@@ -54,6 +54,7 @@ export function TreePanel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<TreeNode[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const canEditAll = window.wptvConfig?.canEditAll ?? false;
 
   const storageKey = 'wptv_open_pages';
@@ -71,6 +72,32 @@ export function TreePanel() {
   });
 
   const clearSearch = useCallback(() => setSearchTerm(''), []);
+
+
+  const handleNewPage = async (e: React.ChangeEvent) => {
+    setIsCreating(true);
+    let parent = !!actionNodeId ? +actionNodeId : 0
+    let menu_order = 0;
+    const value = e.target.value;
+    if (parent !== 0 && value !== 'inside') {
+      const page = await getPage(parent);
+      switch (value) {
+        case 'before':
+          parent = page.parent;
+          menu_order = page.menu_order - 1;
+          break;
+        case 'after':
+          parent = page.parent;
+          menu_order = page.menu_order + 1;
+          break;
+
+      }
+    }
+
+    const newPost = await createPage({ parent, menu_order });
+    window.open(`${window.wptvConfig?.adminUrl ?? ''}post.php?post=${newPost.id}&action=edit`, '_blank');
+    setIsCreating(false);
+  }
 
   // Fetch matching pages + their full ancestor chains, then build a tree from them
   useEffect(() => {
@@ -235,7 +262,14 @@ export function TreePanel() {
   return (
     <TreeContext.Provider value={{ homePageId, setTree, treeApiRef, actionNodeId, setActionNodeId, canEditAll, clearSearch }}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ padding: '0 4px 8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '8px', padding: '0 4px 8px', flexShrink: 0 }}>
+          <select onChange={handleNewPage} disabled={isCreating} >
+            <option disabled selected>New page...</option>
+            <option value="inside">New page inside</option>
+            <option value="before">New page before</option>
+            <option value="after">New page after</option>
+          </select>
+
           <input
             type="search"
             placeholder="Search all pages…"
