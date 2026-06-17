@@ -74,7 +74,7 @@ export function TreePanel() {
   const clearSearch = useCallback(() => setSearchTerm(''), []);
 
 
-  const handleNewPage = async (e: React.ChangeEvent) => {
+  const handleNewPage = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     setIsCreating(true);
     let parent = !!actionNodeId ? +actionNodeId : 0
     let menu_order = 0;
