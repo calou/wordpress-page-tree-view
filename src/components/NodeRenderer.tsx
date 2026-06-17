@@ -107,7 +107,7 @@ export function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<Tree
             }}>Front page</small>
           ) : ''}
         </span>
-        <NodeActions post={post} nodeId={node.id} active={isActive} editable={canEditAll} isHomePage={isHomePage} />
+        <NodeActions post={post} nodeId={node.id} active={isActive} editable={canEditAll} isHomePage={isHomePage} handleRowClick={handleRowClick} />
       </span>
     </div >
   );

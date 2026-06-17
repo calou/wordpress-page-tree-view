@@ -388,7 +388,8 @@ function NodeActions({
   nodeId,
   active,
   editable,
-  isHomePage
+  isHomePage,
+  handleRowClick
 }) {
   const {
     setTree,
@@ -489,6 +490,7 @@ function NodeActions({
       color: '#ccc',
       userSelect: 'none'
     },
+    onClick: handleRowClick,
     children: "|"
   });
   const base = {
@@ -592,6 +594,12 @@ function NodeActions({
             children: "Export"
           })]
         })]
+      })]
+    }), !active && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
+      children: [sep, " ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("button", {
+        style: base,
+        onClick: handleRowClick,
+        children: "..."
       })]
     })]
   });
@@ -747,7 +755,8 @@ function NodeRenderer({
         nodeId: node.id,
         active: isActive,
         editable: canEditAll,
-        isHomePage: isHomePage
+        isHomePage: isHomePage,
+        handleRowClick: handleRowClick
       })]
     })]
   });

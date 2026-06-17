@@ -38,7 +38,7 @@ const stop = (e: React.MouseEvent) => {
   e.preventDefault();
 };
 
-export function NodeActions({ post, nodeId, active, editable, isHomePage }: NodeActionsProps) {
+export function NodeActions({ post, nodeId, active, editable, isHomePage, handleRowClick }: NodeActionsProps) {
   const { setTree, treeApiRef, setActionNodeId, clearSearch } = useTreeContext();
   const adminUrl = window.wptvConfig?.adminUrl ?? '';
   const [busy, setBusy] = useState(false);
@@ -131,7 +131,7 @@ export function NodeActions({ post, nodeId, active, editable, isHomePage }: Node
     setActionNodeId(null);
   };
 
-  const sep = <span style={{ color: '#ccc', userSelect: 'none' }}>|</span>;
+  const sep = <span style={{ color: '#ccc', userSelect: 'none' }} onClick={handleRowClick}>|</span>;
 
   const base: React.CSSProperties = {
     fontSize: 15,
@@ -223,8 +223,12 @@ export function NodeActions({ post, nodeId, active, editable, isHomePage }: Node
             </>
           )}
         </>
-      )
-      }
+      )}
+      {!active && (
+        <>
+          {sep} <button style={base} onClick={handleRowClick}>...</button>
+        </>
+      )}
     </span >
   );
 }

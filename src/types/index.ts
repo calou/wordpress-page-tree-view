@@ -41,6 +41,7 @@ export interface NodeActionsProps {
   active: boolean;
   editable: boolean;
   isHomePage: boolean;
+  handleRowClick: (e: React.MouseEvent) => void;
 }
 
 declare global {
